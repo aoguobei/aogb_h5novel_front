@@ -10,6 +10,7 @@
             <el-step title="通用配置" />
             <el-step title="支付配置" />
             <el-step title="UI配置" />
+            <el-step title="小说特有配置" />
             <el-step title="生成文件" />
           </el-steps>
         </div>
@@ -238,9 +239,50 @@
         </el-form>
       </div>
 
-      <!-- 步骤6: 生成文件 -->
+      <!-- 步骤6: 小说配置 -->
       <div v-if="currentStep === 5" class="step-content">
-        <h3>第六步：生成文件</h3>
+        <h3>第六步：小说特有配置（可选）</h3>
+        <p class="step-description">
+          这些配置将存储到数据库中，并写入本地文件。如果不需要可以跳过。
+        </p>
+        
+        <div v-if="basicInfo.host === 'tth5'">
+          <el-form :model="novelConfig" label-width="120px">
+            <el-form-item label="TT跳转首页URL">
+              <el-input 
+                v-model="novelConfig.tt_jump_home_url" 
+                placeholder="例如：https://paps.funshion.com/v1/applet/createschema"
+                clearable
+              >
+                <template #append>
+                  <el-button @click="generateTTUrl" :loading="isGeneratingUrl">
+                    生成URL
+                  </el-button>
+                </template>
+              </el-input>
+              <span class="form-tip">头条小程序跳转首页的URL</span>
+            </el-form-item>
+            
+            <el-form-item label="TT登录回调域名">
+              <el-input 
+                v-model="novelConfig.tt_login_callback_domain" 
+                placeholder="例如：novetest.fun.tv"
+                clearable
+              />
+              <span class="form-tip">头条登录回调的域名</span>
+            </el-form-item>
+          </el-form>
+        </div>
+        
+        <div v-else class="step-description">
+          <div></div>
+          <el-empty description="当前端类型不支持小说特有配置" />
+        </div>
+      </div>
+
+      <!-- 步骤7: 生成文件 -->
+      <div v-if="currentStep === 6" class="step-content">
+        <h3>第七步：生成文件</h3>
         <div class="progress-section">
           <el-progress
             :percentage="progressPercentage"
@@ -263,7 +305,7 @@
       <div class="step-actions">
         <el-button v-if="currentStep > 0" @click="prevStep">上一步</el-button>
         <el-button
-          v-if="currentStep < 5"
+          v-if="currentStep < 6"
           type="primary"
           @click="nextStep"
           :disabled="!canProceed"
@@ -271,7 +313,7 @@
           下一步
         </el-button>
         <el-button
-          v-if="currentStep === 5"
+          v-if="currentStep === 6"
           type="success"
           @click="createWebsite"
           :loading="isCreating"
@@ -382,6 +424,15 @@ const uiConfig = ref({
   theme_text_main: '#FF542B'
 })
 
+// 小说特有配置
+const novelConfig = ref({
+  tt_jump_home_url: '',
+  tt_login_callback_domain: ''
+})
+
+// 生成URL状态
+const isGeneratingUrl = ref(false)
+
 // 颜色格式验证函数
 const validateHexColor = (color) => {
   if (!color) return true
@@ -489,6 +540,8 @@ const canProceed = computed(() => {
              validateHexColor(uiConfig.value.theme_bg_main) &&
              validateHexColor(uiConfig.value.theme_bg_second) &&
              validateHexColor(uiConfig.value.theme_text_main)
+    case 5:
+      return basicInfo.value.host === 'tth5' ? true : true // 小说特有配置是可选的，只有tth5才显示表单
     default:
       return true
   }
@@ -547,7 +600,7 @@ const createBrand = async () => {
 }
 
 const nextStep = () => {
-  if (currentStep.value < 5) {
+  if (currentStep.value < 6) {
     currentStep.value++
   }
 }
@@ -583,7 +636,8 @@ const createWebsite = async () => {
     baseConfig: baseConfig.value,
     commonConfig: commonConfig.value,
     payConfig: payConfig.value,
-    uiConfig: uiConfig.value
+    uiConfig: uiConfig.value,
+    novelConfig: novelConfig.value
   })
 
   isCreating.value = true
@@ -605,6 +659,11 @@ const createWebsite = async () => {
     // 如果需要额外的baseConfig，添加到请求中
     if (needsExtraBaseConfig.value) {
       requestData.extra_base_config = extraBaseConfig.value
+    }
+
+    // 如果用户填写了小说配置，添加到请求中
+    if (basicInfo.value.host === 'tth5' && (novelConfig.value.tt_jump_home_url || novelConfig.value.tt_login_callback_domain)) {
+      requestData.novel_config = novelConfig.value
     }
 
     // 模拟进度更新
@@ -636,27 +695,35 @@ const createWebsite = async () => {
     await new Promise(resolve => setTimeout(resolve, 600))
     updateProgress(needsExtraBaseConfig.value ? 60 : 70, '', '创建UI配置...', { status: 'success', message: 'UIConfig创建成功' })
 
+    // 创建小说特有配置（如果有）
+    if (basicInfo.value.host === 'tth5' && (novelConfig.value.tt_jump_home_url || novelConfig.value.tt_login_callback_domain)) {
+      updateProgress(needsExtraBaseConfig.value ? 62 : 72, '', '创建小说特有配置...', { status: 'loading', message: '创建小说特有配置...' })
+      await new Promise(resolve => setTimeout(resolve, 400))
+      updateProgress(needsExtraBaseConfig.value ? 64 : 74, '', '创建小说特有配置...', { status: 'success', message: '小说特有配置创建成功' })
+    }
+
     // 调用批量创建接口
-    updateProgress(needsExtraBaseConfig.value ? 65 : 75, '', '提交到后端...', { status: 'loading', message: '调用后端API...' })
+    const hasNovelConfig = basicInfo.value.host === 'tth5' && (novelConfig.value.tt_jump_home_url || novelConfig.value.tt_login_callback_domain)
+    updateProgress(needsExtraBaseConfig.value ? (hasNovelConfig ? 70 : 68) : (hasNovelConfig ? 80 : 78), '', '提交到后端...', { status: 'loading', message: '调用后端API...' })
     console.log('Sending request to backend:', requestData)
     const response = await websiteApi.createWebsite(requestData)
     console.log('Backend response:', response.data)
-    updateProgress(needsExtraBaseConfig.value ? 75 : 85, '', '更新项目配置...', { status: 'success', message: '后端API调用成功' })
+    updateProgress(needsExtraBaseConfig.value ? (hasNovelConfig ? 75 : 73) : (hasNovelConfig ? 85 : 83), '', '更新项目配置...', { status: 'success', message: '后端API调用成功' })
 
     // 模拟项目配置文件更新进度
-    updateProgress(needsExtraBaseConfig.value ? 77 : 87, '', '更新项目配置...', { status: 'loading', message: '更新 _host.js 文件...' })
+    updateProgress(needsExtraBaseConfig.value ? (hasNovelConfig ? 77 : 75) : (hasNovelConfig ? 87 : 85), '', '更新项目配置...', { status: 'loading', message: '更新 _host.js 文件...' })
     await new Promise(resolve => setTimeout(resolve, 300))
-    updateProgress(needsExtraBaseConfig.value ? 79 : 89, '', '更新项目配置...', { status: 'success', message: '_host.js 文件更新成功' })
+    updateProgress(needsExtraBaseConfig.value ? (hasNovelConfig ? 79 : 77) : (hasNovelConfig ? 89 : 87), '', '更新项目配置...', { status: 'success', message: '_host.js 文件更新成功' })
 
-    updateProgress(needsExtraBaseConfig.value ? 81 : 91, '', '更新项目配置...', { status: 'loading', message: '更新 index.js 文件...' })
+    updateProgress(needsExtraBaseConfig.value ? (hasNovelConfig ? 81 : 79) : (hasNovelConfig ? 91 : 89), '', '更新项目配置...', { status: 'loading', message: '更新 index.js 文件...' })
     await new Promise(resolve => setTimeout(resolve, 300))
-    updateProgress(needsExtraBaseConfig.value ? 83 : 93, '', '更新项目配置...', { status: 'success', message: 'index.js 文件更新成功' })
+    updateProgress(needsExtraBaseConfig.value ? (hasNovelConfig ? 83 : 81) : (hasNovelConfig ? 93 : 91), '', '更新项目配置...', { status: 'success', message: 'index.js 文件更新成功' })
 
-    updateProgress(needsExtraBaseConfig.value ? 85 : 95, '', '更新项目配置...', { status: 'loading', message: '更新 vite.config.js 文件...' })
+    updateProgress(needsExtraBaseConfig.value ? (hasNovelConfig ? 85 : 83) : (hasNovelConfig ? 95 : 93), '', '更新项目配置...', { status: 'loading', message: '更新 vite.config.js 文件...' })
     await new Promise(resolve => setTimeout(resolve, 300))
-    updateProgress(needsExtraBaseConfig.value ? 87 : 97, '', '更新项目配置...', { status: 'success', message: 'vite.config.js 文件更新成功' })
+    updateProgress(needsExtraBaseConfig.value ? (hasNovelConfig ? 87 : 85) : (hasNovelConfig ? 97 : 95), '', '更新项目配置...', { status: 'success', message: 'vite.config.js 文件更新成功' })
 
-    updateProgress(needsExtraBaseConfig.value ? 89 : 99, '', '更新项目配置...', { status: 'loading', message: '更新 package.json 文件...' })
+    updateProgress(needsExtraBaseConfig.value ? (hasNovelConfig ? 89 : 87) : (hasNovelConfig ? 99 : 97), '', '更新项目配置...', { status: 'loading', message: '更新 package.json 文件...' })
     await new Promise(resolve => setTimeout(resolve, 300))
     updateProgress(100, 'success', '网站创建完成！', { status: 'success', message: 'package.json 文件更新成功，所有配置完成' })
 
@@ -679,6 +746,46 @@ const createWebsite = async () => {
     console.error('Create website error:', error)
   } finally {
     isCreating.value = false
+  }
+}
+
+// 生成头条跳转首页URL
+const generateTTUrl = async () => {
+  isGeneratingUrl.value = true
+  
+  try {
+    // 构建请求参数
+    const requestParam = {
+      business: extraBaseConfig.value.cl, // 使用基础配置中的cl作为business
+      path: 'pages/homePage/homePage',
+      query: JSON.stringify({})
+    }
+    
+    // 设置请求头
+    const header = {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    }
+    
+    // 发送POST请求
+    const response = await fetch('https://paps.funshion.com/v1/applet/createschema', {
+      method: 'POST',
+      headers: header,
+      body: new URLSearchParams(requestParam)
+    })
+    
+    const result = await response.json()
+    
+    if (result.data && result.data.schema) {
+      novelConfig.value.tt_jump_home_url = result.data.schema
+      ElMessage.success('头条跳转首页URL生成成功！')
+    } else {
+      ElMessage.error('生成URL失败：' + (result.message || '未知错误'))
+    }
+  } catch (error) {
+    console.error('生成URL失败:', error)
+    ElMessage.error('生成URL失败：网络错误')
+  } finally {
+    isGeneratingUrl.value = false
   }
 }
 
@@ -752,6 +859,16 @@ onMounted(() => {
 .step-content h3 {
   margin-bottom: 20px;
   color: #409eff;
+}
+
+.step-description {
+  font-size: 14px;
+  color: #909399;
+  margin-bottom: 20px;
+  padding: 10px;
+  background-color: #f5f7fa;
+  border-radius: 4px;
+  border-left: 4px solid #409eff;
 }
 
 .step-actions {

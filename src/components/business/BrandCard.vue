@@ -21,31 +21,31 @@
           </div>
           <div class="info-item">
             <el-icon><Link /></el-icon>
-            <span class="info-text">网站数量: {{ brand.clients?.length || 0 }} 个</span>
+            <span class="info-text">客户端数量: {{ brand.clients?.length || 0 }} 个</span>
           </div>
         </div>
       </div>
 
       <!-- 操作按钮区域 -->
       <div class="brand-actions">
-        <el-button 
-          type="primary" 
-          size="small" 
+        <el-button
+          type="primary"
+          size="small"
           @click="$emit('view', brand)"
           :icon="View"
         >
           查看网站
         </el-button>
-        <el-button 
-          size="small" 
+        <el-button
+          size="small"
           @click="$emit('edit', brand)"
           :icon="Edit"
         >
           编辑
         </el-button>
-        <el-button 
-          type="danger" 
-          size="small" 
+        <el-button
+          type="danger"
+          size="small"
           @click="$emit('delete', brand)"
           :icon="Delete"
         >
@@ -171,23 +171,23 @@ defineEmits(['view', 'edit', 'delete'])
   .brand-content {
     padding: 16px;
   }
-  
+
   .brand-header {
     gap: 12px;
     margin-bottom: 16px;
   }
-  
+
   .brand-icon {
     width: 40px;
     height: 40px;
   }
-  
+
   .brand-title h3 {
     font-size: 16px;
   }
-  
+
   .brand-actions {
     flex-wrap: wrap;
   }
 }
-</style> 
+</style>

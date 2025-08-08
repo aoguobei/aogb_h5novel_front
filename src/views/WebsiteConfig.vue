@@ -143,6 +143,24 @@
         </el-descriptions>
       </el-card>
 
+      <!-- 小说配置 -->
+      <el-card class="config-card" v-if="config.novel_config">
+        <template #header>
+          <span>小说配置</span>
+        </template>
+        <el-descriptions :column="2" border>
+          <el-descriptions-item label="TT跳转首页URL">
+            <el-link v-if="config.novel_config.tt_jump_home_url" :href="config.novel_config.tt_jump_home_url" target="_blank" type="primary">
+              {{ config.novel_config.tt_jump_home_url }}
+            </el-link>
+            <span v-else>-</span>
+          </el-descriptions-item>
+          <el-descriptions-item label="TT登录回调域名">
+            <span>{{ config.novel_config.tt_login_callback_domain || '-' }}</span>
+          </el-descriptions-item>
+        </el-descriptions>
+      </el-card>
+
       <!-- 操作按钮 -->
       <div class="actions">
         <el-button type="primary" @click="editConfig">编辑配置</el-button>
