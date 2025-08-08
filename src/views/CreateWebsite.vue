@@ -33,11 +33,27 @@
             </el-button>
           </el-form-item>
           <el-form-item label="端类型">
-            <el-select v-model="basicInfo.host" placeholder="选择端类型">
-              <el-option label="H5" value="h5" />
-              <el-option label="头条H5" value="tth5" />
-              <el-option label="快手H5" value="ksh5" />
+            <el-select 
+              v-model="basicInfo.host" 
+              placeholder="选择端类型"
+              :disabled="!basicInfo.brandId"
+            >
+              <el-option
+                v-for="host in availableHosts"
+                :key="host.value"
+                :label="host.label"
+                :value="host.value"
+              />
             </el-select>
+            <div v-if="!basicInfo.brandId" class="form-tip">
+              请先选择品牌
+            </div>
+            <div v-else-if="availableHosts.length === 0" class="form-tip form-tip-warning">
+              该品牌的所有端类型都已创建完成
+            </div>
+            <div v-else-if="!isCurrentHostAvailable" class="form-tip form-tip-error">
+              当前选择的端类型已存在，请重新选择
+            </div>
           </el-form-item>
         </el-form>
       </div>
@@ -45,15 +61,15 @@
       <!-- 步骤2: 基础配置 -->
       <div v-if="currentStep === 1" class="step-content">
         <h3>第二步：基础配置</h3>
-        
+
         <!-- 主基础配置 -->
         <el-divider content-position="left">{{ basicInfo.host.toUpperCase() }}端基础配置</el-divider>
         <el-form :model="baseConfig" label-width="120px">
           <el-form-item label="应用名称">
-            <el-input v-model="baseConfig.app_name" placeholder="输入应用名称" />
+            <el-input v-model="baseConfig.app_name" placeholder="输入app_name" />
           </el-form-item>
           <el-form-item label="平台">
-            <el-input v-model="baseConfig.platform" placeholder="输入平台" />
+            <el-input v-model="baseConfig.platform" placeholder="输入platform" />
           </el-form-item>
 
           <el-form-item label="app_code">
@@ -69,7 +85,7 @@
             <el-input v-model="baseConfig.appid" placeholder="输入appid" />
           </el-form-item>
           <el-form-item label="版本">
-            <el-input v-model="baseConfig.version" placeholder="输入版本号" />
+            <el-input v-model="baseConfig.version" placeholder="输入version" />
           </el-form-item>
           <el-form-item label="cl">
             <el-input v-model="baseConfig.cl" placeholder="输入cl" />
@@ -84,10 +100,10 @@
           <el-divider content-position="left">{{ extraBaseConfigLabel }}</el-divider>
           <el-form :model="extraBaseConfig" label-width="120px">
             <el-form-item label="应用名称">
-              <el-input v-model="extraBaseConfig.app_name" placeholder="输入应用名称" />
+              <el-input v-model="extraBaseConfig.app_name" placeholder="输入app_name" />
             </el-form-item>
             <el-form-item label="平台">
-              <el-input v-model="extraBaseConfig.platform" placeholder="输入平台" />
+              <el-input v-model="extraBaseConfig.platform" placeholder="输入platform" />
             </el-form-item>
 
             <el-form-item label="app_code">
@@ -103,7 +119,7 @@
               <el-input v-model="extraBaseConfig.appid" placeholder="输入appid" />
             </el-form-item>
             <el-form-item label="版本">
-              <el-input v-model="extraBaseConfig.version" placeholder="输入版本号" />
+              <el-input v-model="extraBaseConfig.version" placeholder="输入version" />
             </el-form-item>
             <el-form-item label="cl">
               <el-input v-model="extraBaseConfig.cl" placeholder="输入cl" />
@@ -287,8 +303,9 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { CircleCheck, CircleClose, Loading } from '@element-plus/icons-vue'
-import axios from 'axios'
 import { useRouter } from 'vue-router'
+import { brandApi } from '@/api/brand'
+import { websiteApi } from '@/api/website'
 
 const router = useRouter()
 
@@ -379,15 +396,13 @@ const handleColorInput = (field, value) => {
     // 如果是rgba格式，转换为16进制
     const rgbaMatch = value.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/)
     if (rgbaMatch) {
-      const r = parseInt(rgbaMatch[1])
-      const g = parseInt(rgbaMatch[2])
-      const b = parseInt(rgbaMatch[3])
-      const hex = '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)
-      uiConfig.value[field] = hex
+      const r = parseInt(rgbaMatch[1]).toString(16).padStart(2, '0')
+      const g = parseInt(rgbaMatch[2]).toString(16).padStart(2, '0')
+      const b = parseInt(rgbaMatch[3]).toString(16).padStart(2, '0')
+      uiConfig.value[field] = `#${r}${g}${b}`
     }
-  } else if (value && !value.startsWith('#')) {
-    // 如果不是以#开头，添加#
-    uiConfig.value[field] = '#' + value
+  } else {
+    uiConfig.value[field] = value
   }
 }
 
@@ -397,25 +412,77 @@ const needsExtraBaseConfig = computed(() => {
 })
 
 const extraBaseConfigLabel = computed(() => {
-  if (basicInfo.value.host === 'tth5') return '头条端基础配置'
-  if (basicInfo.value.host === 'ksh5') return '快手端基础配置'
-  return ''
+  if (basicInfo.value.host === 'tth5') return 'TT端基础配置'
+  if (basicInfo.value.host === 'ksh5') return 'KS端基础配置'
+  return '额外基础配置'
+})
+
+// 获取当前选中品牌的已有host列表
+const selectedBrand = computed(() => {
+  return brands.value.find(b => b.id === basicInfo.value.brandId)
+})
+
+// 获取可选的host选项
+const availableHosts = computed(() => {
+  if (!selectedBrand.value) {
+    return [
+      { label: 'H5', value: 'h5' },
+      { label: '头条H5', value: 'tth5' },
+      { label: '快手H5', value: 'ksh5' }
+    ]
+  }
+
+  // 获取该品牌已有的host列表
+  const existingHosts = selectedBrand.value.clients?.map(client => client.host) || []
+  
+  // 所有可选的host
+  const allHosts = [
+    { label: 'H5', value: 'h5' },
+    { label: '头条H5', value: 'tth5' },
+    { label: '快手H5', value: 'ksh5' }
+  ]
+
+  // 过滤掉已存在的host
+  return allHosts.filter(host => !existingHosts.includes(host.value))
+})
+
+// 检查当前选择的host是否可用
+const isCurrentHostAvailable = computed(() => {
+  if (!basicInfo.value.host) return true
+  return availableHosts.value.some(host => host.value === basicInfo.value.host)
 })
 
 const canProceed = computed(() => {
   switch (currentStep.value) {
     case 0:
-      return basicInfo.value.brandId && basicInfo.value.host
+      return basicInfo.value.brandId && 
+             basicInfo.value.host && 
+             isCurrentHostAvailable.value
     case 1:
-      const baseValid = baseConfig.value.app_name && baseConfig.value.app_code
-      if (needsExtraBaseConfig.value) {
-        return baseValid && extraBaseConfig.value.app_name && extraBaseConfig.value.app_code
-      }
-      return baseValid
+      return baseConfig.value.app_name &&
+             baseConfig.value.platform &&
+             baseConfig.value.app_code &&
+             baseConfig.value.product &&
+             baseConfig.value.customer &&
+             baseConfig.value.appid &&
+             baseConfig.value.version &&
+             baseConfig.value.cl &&
+             baseConfig.value.uc &&
+             (!needsExtraBaseConfig.value || (
+               extraBaseConfig.value.app_name &&
+               extraBaseConfig.value.platform &&
+               extraBaseConfig.value.app_code &&
+               extraBaseConfig.value.product &&
+               extraBaseConfig.value.customer &&
+               extraBaseConfig.value.appid &&
+               extraBaseConfig.value.version &&
+               extraBaseConfig.value.cl &&
+               extraBaseConfig.value.uc
+             ))
     case 2:
-      return true // 通用配置可选
+      return commonConfig.value.script_base
     case 3:
-      return true // 支付配置可选
+      return true // 支付配置都是可选的
     case 4:
       return uiConfig.value.theme_bg_main &&
              uiConfig.value.theme_bg_second &&
@@ -430,8 +497,9 @@ const canProceed = computed(() => {
 // 方法
 const fetchBrands = async () => {
   try {
-    const res = await axios.get('/api/brands')
-    brands.value = res.data.data || []
+    const response = await brandApi.getBrands()
+    // 适配新的后端返回结构
+    brands.value = response.data.data || response.data || []
   } catch (error) {
     console.error('Failed to fetch brands:', error)
   }
@@ -462,11 +530,16 @@ const resetExtraBaseConfig = () => {
 
 const createBrand = async () => {
   try {
-    const res = await axios.post('/api/brands', { code: newBrand.value.code })
-    ElMessage.success('品牌创建成功')
-    showCreateBrandDialog.value = false
-    newBrand.value.code = ''
-    await fetchBrands()
+    const response = await brandApi.createBrand({ code: newBrand.value.code })
+    // 统一适配包装结构
+    if (response && response.success) {
+      ElMessage.success('品牌创建成功')
+      showCreateBrandDialog.value = false
+      newBrand.value.code = ''
+      await fetchBrands()
+    } else {
+      ElMessage.error('品牌创建失败')
+    }
   } catch (error) {
     ElMessage.error('品牌创建失败')
     console.error(error)
@@ -517,20 +590,6 @@ const createWebsite = async () => {
   resetProgress()
 
   try {
-    // 验证颜色格式
-    if (!validateHexColor(uiConfig.value.theme_bg_main)) {
-      ElMessage.error('主背景色格式不正确，请使用16进制颜色值（如：#FF0000）')
-      return
-    }
-    if (!validateHexColor(uiConfig.value.theme_bg_second)) {
-      ElMessage.error('次背景色格式不正确，请使用16进制颜色值（如：#FF0000）')
-      return
-    }
-    if (!validateHexColor(uiConfig.value.theme_text_main)) {
-      ElMessage.error('主文字色格式不正确，请使用16进制颜色值（如：#FF0000）')
-      return
-    }
-
     // 构建请求数据
     const requestData = {
       basic_info: {
@@ -538,45 +597,38 @@ const createWebsite = async () => {
         host: basicInfo.value.host
       },
       base_config: baseConfig.value,
-      extra_base_config: needsExtraBaseConfig.value ? extraBaseConfig.value : null,
       common_config: commonConfig.value,
       pay_config: payConfig.value,
       ui_config: uiConfig.value
     }
 
-    // 开始创建流程
-    updateProgress(10, '', '开始创建网站...', { status: 'loading', message: '初始化创建流程...' })
-
-    // 验证数据
-    updateProgress(15, '', '验证数据...', { status: 'loading', message: '验证品牌和端类型...' })
-    await new Promise(resolve => setTimeout(resolve, 500))
-    updateProgress(20, '', '验证数据...', { status: 'success', message: '数据验证通过' })
-
-    // 创建Client
-    updateProgress(25, '', '创建客户端...', { status: 'loading', message: '创建Client记录...' })
-    await new Promise(resolve => setTimeout(resolve, 800))
-    updateProgress(30, '', '创建客户端...', { status: 'success', message: 'Client创建成功' })
-
-    // 创建BaseConfig
-    updateProgress(35, '', '创建基础配置...', { status: 'loading', message: '创建主BaseConfig...' })
-    await new Promise(resolve => setTimeout(resolve, 600))
-    updateProgress(40, '', '创建基础配置...', { status: 'success', message: '主BaseConfig创建成功' })
-
-    // 创建额外的BaseConfig（如果需要）
+    // 如果需要额外的baseConfig，添加到请求中
     if (needsExtraBaseConfig.value) {
-      updateProgress(42, '', '创建额外配置...', { status: 'loading', message: '创建额外BaseConfig...' })
-      await new Promise(resolve => setTimeout(resolve, 600))
-      updateProgress(45, '', '创建额外配置...', { status: 'success', message: '额外BaseConfig创建成功' })
+      requestData.extra_base_config = extraBaseConfig.value
     }
 
-    // 创建CommonConfig
-    updateProgress(needsExtraBaseConfig.value ? 47 : 45, '', '创建通用配置...', { status: 'loading', message: '创建CommonConfig...' })
-    await new Promise(resolve => setTimeout(resolve, 600))
-    updateProgress(needsExtraBaseConfig.value ? 50 : 50, '', '创建通用配置...', { status: 'success', message: 'CommonConfig创建成功' })
+    // 模拟进度更新
+    updateProgress(10, '', '验证数据...', { status: 'loading', message: '验证表单数据...' })
+    await new Promise(resolve => setTimeout(resolve, 300))
+    updateProgress(20, '', '验证数据...', { status: 'success', message: '数据验证通过' })
 
-    // 创建PayConfig
-    updateProgress(needsExtraBaseConfig.value ? 52 : 55, '', '创建支付配置...', { status: 'loading', message: '创建PayConfig...' })
-    await new Promise(resolve => setTimeout(resolve, 600))
+    updateProgress(30, '', '创建Client...', { status: 'loading', message: '创建Client...' })
+    await new Promise(resolve => setTimeout(resolve, 400))
+    updateProgress(40, '', '创建Client...', { status: 'success', message: 'Client创建成功' })
+
+    updateProgress(45, '', '创建BaseConfig...', { status: 'loading', message: '创建BaseConfig...' })
+    await new Promise(resolve => setTimeout(resolve, 500))
+    updateProgress(50, '', '创建BaseConfig...', { status: 'success', message: 'BaseConfig创建成功' })
+
+    // 如果需要额外的BaseConfig
+    if (needsExtraBaseConfig.value) {
+      updateProgress(52, '', '创建额外BaseConfig...', { status: 'loading', message: '创建额外BaseConfig...' })
+      await new Promise(resolve => setTimeout(resolve, 400))
+      updateProgress(54, '', '创建额外BaseConfig...', { status: 'success', message: '额外BaseConfig创建成功' })
+    }
+
+    updateProgress(needsExtraBaseConfig.value ? 55 : 60, '', '创建支付配置...', { status: 'loading', message: '创建PayConfig...' })
+    await new Promise(resolve => setTimeout(resolve, 300))
     updateProgress(needsExtraBaseConfig.value ? 55 : 60, '', '创建支付配置...', { status: 'success', message: 'PayConfig创建成功' })
 
     // 创建UIConfig
@@ -587,7 +639,7 @@ const createWebsite = async () => {
     // 调用批量创建接口
     updateProgress(needsExtraBaseConfig.value ? 65 : 75, '', '提交到后端...', { status: 'loading', message: '调用后端API...' })
     console.log('Sending request to backend:', requestData)
-    const response = await axios.post('/api/create-website', requestData)
+    const response = await websiteApi.createWebsite(requestData)
     console.log('Backend response:', response.data)
     updateProgress(needsExtraBaseConfig.value ? 75 : 85, '', '更新项目配置...', { status: 'success', message: '后端API调用成功' })
 
@@ -612,7 +664,13 @@ const createWebsite = async () => {
 
     // 延迟跳转，让用户看到完成状态
     setTimeout(() => {
-      router.push('/brands')
+      // 适配新的后端返回结构
+      const responseData = response.data.data || response.data
+      if (responseData?.client_id) {
+        router.push(`/website-config/${responseData.client_id}`)
+      } else {
+        router.push('/website-configs')
+      }
     }, 2000)
 
   } catch (error) {
@@ -629,13 +687,41 @@ watch(() => basicInfo.value.host, (newHost) => {
   if (newHost && (newHost === 'tth5' || newHost === 'ksh5')) {
     // 预填充一些默认值
     if (newHost === 'tth5') {
-      extraBaseConfig.value.platform = 'tt'
+      extraBaseConfig.value.platform = 'douyin'
     } else if (newHost === 'ksh5') {
-      extraBaseConfig.value.platform = 'ks'
+      extraBaseConfig.value.platform = 'kuaishou'
     }
   } else {
     resetExtraBaseConfig()
   }
+})
+
+// 监听品牌变化，重置host选择
+watch(() => basicInfo.value.brandId, (newBrandId) => {
+  if (newBrandId) {
+    // 检查当前选择的host是否在新品牌中可用
+    const brand = brands.value.find(b => b.id === newBrandId)
+    if (brand && basicInfo.value.host) {
+      const existingHosts = brand.clients?.map(client => client.host) || []
+      if (existingHosts.includes(basicInfo.value.host)) {
+        // 如果当前host已存在，清空选择
+        basicInfo.value.host = ''
+      }
+    }
+  } else {
+    // 如果没有选择品牌，清空host
+    basicInfo.value.host = ''
+  }
+})
+
+// 监听host变化，重置额外的baseConfig
+watch(() => baseConfig.value, (conf) => {
+  const sameChangeKeyArr = [ 'app_name', 'platform', 'product', 'uc' ]
+  sameChangeKeyArr.forEach( item => {
+    if (conf[item]) extraBaseConfig.value[item] = conf[item]
+  })
+}, {
+  deep: true
 })
 
 onMounted(() => {
@@ -713,5 +799,19 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+.form-tip {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 5px;
+}
+
+.form-tip-warning {
+  color: #E6A23C;
+}
+
+.form-tip-error {
+  color: #F56C6C;
 }
 </style>

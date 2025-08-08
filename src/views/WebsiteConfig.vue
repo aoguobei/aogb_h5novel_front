@@ -97,7 +97,7 @@
         <template #header>
           <span>支付配置</span>
         </template>
-        <el-descriptions :column="2" border>
+        <el-descriptions :column="3" border>
           <el-descriptions-item label="启用普通支付">
             <el-tag :type="config.pay_config.normal_pay_enable ? 'success' : 'info'">
               {{ config.pay_config.normal_pay_enable ? '是' : '否' }}
@@ -155,12 +155,13 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Loading } from '@element-plus/icons-vue'
-import axios from 'axios'
+import { websiteApi } from '@/api/website'
 
 const route = useRoute()
+const router = useRouter()
 const config = ref(null)
 const loading = ref(false)
 
@@ -174,8 +175,9 @@ const formatDate = (dateString) => {
 const fetchConfig = async () => {
   loading.value = true
   try {
-    const response = await axios.get(`/api/website-config/${route.params.clientId}`)
-    config.value = response.data.data
+    const response = await websiteApi.getWebsiteConfig(route.params.clientId)
+    // 适配新的后端返回结构
+    config.value = response.data.data || response.data
   } catch (error) {
     ElMessage.error('获取配置失败')
     console.error(error)
@@ -277,4 +279,4 @@ onMounted(() => {
   background-color: #f5f5f5;
   border-radius: 8px;
 }
-</style> 
+</style>

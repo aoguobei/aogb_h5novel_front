@@ -10,7 +10,7 @@
           <el-icon><Plus /></el-icon>
           新建品牌
         </el-button>
-        <el-button type="success" @click="createWebsite">
+        <el-button type="success" @click="$router.push('/create-website')">
           <el-icon><Plus /></el-icon>
           创建网站
         </el-button>
@@ -18,57 +18,40 @@
     </div>
 
     <div class="content-area">
-      <div v-if="loading" class="loading-container">
-        <el-icon class="is-loading"><Loading /></el-icon>
-        <p>加载中...</p>
-      </div>
-
-      <div v-else-if="!brands.length" class="empty-container">
-        <el-empty description="暂无品牌数据">
-          <el-button type="primary" @click="showCreateDialog = true">创建第一个品牌</el-button>
-        </el-empty>
-      </div>
-
+      <LoadingSpinner v-if="loading" />
+      
+      <el-empty 
+        v-else-if="!brands.length" 
+        description="暂无品牌数据"
+      >
+        <el-button type="primary" @click="showCreateDialog = true">
+          创建第一个品牌
+        </el-button>
+      </el-empty>
+      
       <div v-else class="brands-grid">
-        <el-card
+        <BrandCard
           v-for="brand in brands"
           :key="brand.id"
-          class="brand-card"
-          shadow="hover"
-        >
-          <template #header>
-            <div class="brand-header">
-              <h3>{{ brand.code }}</h3>
-              <div class="brand-actions">
-                <el-button size="small" type="primary" @click="viewBrandWebsites(brand)">
-                  查看网站
-                </el-button>
-                <el-button size="small" @click="editBrand(brand)">编辑</el-button>
-                <el-button size="small" type="danger" @click="deleteBrand(brand)">删除</el-button>
-              </div>
-            </div>
-          </template>
-          
-          <div class="brand-info">
-            <p><strong>品牌代码:</strong> {{ brand.code }}</p>
-            <p><strong>创建时间:</strong> {{ formatDate(brand.created_at) }}</p>
-            <p><strong>网站数量:</strong> {{ brand.clients?.length || 0 }} 个</p>
-          </div>
-        </el-card>
+          :brand="brand"
+          @view="viewBrandWebsites"
+          @edit="editBrand"
+          @delete="handleDeleteBrand"
+        />
       </div>
     </div>
 
     <!-- Create Brand Dialog -->
-    <el-dialog v-model="showCreateDialog" title="Create Brand" width="500px">
+    <el-dialog v-model="showCreateDialog" title="创建品牌" width="500px">
       <el-form :model="newBrand" label-width="100px">
-        <el-form-item label="Brand Code">
-          <el-input v-model="newBrand.code" placeholder="Enter brand code" />
+        <el-form-item label="品牌代码">
+          <el-input v-model="newBrand.code" placeholder="请输入品牌代码" />
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="showCreateDialog = false">Cancel</el-button>
-          <el-button type="primary" @click="createBrand">Confirm</el-button>
+          <el-button @click="showCreateDialog = false">取消</el-button>
+          <el-button type="primary" @click="handleCreateBrand">确认</el-button>
         </span>
       </template>
     </el-dialog>
@@ -79,87 +62,61 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Loading } from '@element-plus/icons-vue'
-import axios from 'axios'
+import { Plus } from '@element-plus/icons-vue'
+import { useBrand } from '@/composables/useBrand'
+import BrandCard from '@/components/business/BrandCard.vue'
+import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 
 const router = useRouter()
-const brands = ref([])
-const loading = ref(false)
+const { brands, loading, fetchBrands, createBrand, deleteBrand } = useBrand()
+
 const showCreateDialog = ref(false)
 const newBrand = ref({
   code: ''
 })
 
-// Fetch brand list
-const fetchBrands = async () => {
-  loading.value = true
-  try {
-    const response = await axios.get('/api/brands')
-    brands.value = response.data.data
-  } catch (error) {
-    ElMessage.error('Failed to fetch brand list')
-    console.error(error)
-  } finally {
-    loading.value = false
+// 创建品牌
+const handleCreateBrand = async () => {
+  if (!newBrand.value.code.trim()) {
+    ElMessage.error('请输入品牌代码')
+    return
   }
-}
 
-// 格式化日期
-const formatDate = (dateString) => {
-  if (!dateString) return '-'
-  return new Date(dateString).toLocaleString('zh-CN')
-}
-
-// 查看品牌的网站
-const viewBrandWebsites = (brand) => {
-  // 跳转到网站配置页面，可以通过筛选显示该品牌的网站
-  router.push('/website-configs')
-  ElMessage.info(`查看 ${brand.code} 品牌的网站配置`)
-}
-
-// Edit brand
-const editBrand = (brand) => {
-  // TODO: Implement edit functionality
-  ElMessage.info('Edit functionality to be implemented')
-}
-
-// Create website
-const createWebsite = () => {
-  router.push('/create-website')
-}
-
-// Delete brand
-const deleteBrand = async (brand) => {
-  try {
-    await ElMessageBox.confirm(`Are you sure to delete brand "${brand.code}"?`, 'Confirm', {
-      confirmButtonText: 'Confirm',
-      cancelButtonText: 'Cancel',
-      type: 'warning'
-    })
-    
-    await axios.delete(`/api/brands/${brand.id}`)
-    ElMessage.success('Deleted successfully')
-    fetchBrands()
-  } catch (error) {
-    if (error !== 'cancel') {
-      ElMessage.error('Delete failed')
-      console.error(error)
-    }
-  }
-}
-
-// Create brand
-const createBrand = async () => {
-  try {
-    await axios.post('/api/brands', { code: newBrand.value.code })
-    ElMessage.success('Created successfully')
+  const success = await createBrand(newBrand.value)
+  if (success) {
     showCreateDialog.value = false
-    newBrand.value = { code: '' }
-    fetchBrands()
-  } catch (error) {
-    ElMessage.error('Create failed')
-    console.error(error)
+    newBrand.value.code = ''
   }
+}
+
+// 删除品牌
+const handleDeleteBrand = async (brand) => {
+  try {
+  return ElMessage.info('删除功能暂未实现')
+    await ElMessageBox.confirm(
+      `确定要删除品牌 "${brand.code}" 吗？`,
+      '警告',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+    
+    await deleteBrand(brand)
+  } catch (error) {
+    // 用户取消删除
+  }
+}
+
+// 编辑品牌
+const editBrand = (brand) => {
+  ElMessage.info('编辑功能暂未实现')
+}
+
+// 查看品牌网站
+const viewBrandWebsites = (brand) => {
+  router.push('/website-configs')
 }
 
 onMounted(() => {
@@ -206,68 +163,10 @@ onMounted(() => {
   min-height: 400px;
 }
 
-.loading-container,
-.empty-container {
-  text-align: center;
-  padding: 60px 20px;
-}
-
-.loading-container .el-icon {
-  font-size: 32px;
-  color: #409eff;
-  animation: rotate 1s linear infinite;
-}
-
-@keyframes rotate {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .brands-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 20px;
-}
-
-.brand-card {
-  transition: all 0.3s ease;
-}
-
-.brand-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-}
-
-.brand-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.brand-header h3 {
-  margin: 0;
-  color: #303133;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.brand-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.brand-info p {
-  margin: 8px 0;
-  color: #606266;
-  font-size: 14px;
-}
-
-.brand-info strong {
-  color: #303133;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .dialog-footer {
@@ -275,4 +174,4 @@ onMounted(() => {
   justify-content: flex-end;
   gap: 10px;
 }
-</style> 
+</style>
