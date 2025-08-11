@@ -34,8 +34,8 @@
             </el-button>
           </el-form-item>
           <el-form-item label="端类型">
-            <el-select 
-              v-model="basicInfo.host" 
+            <el-select
+              v-model="basicInfo.host"
               placeholder="选择端类型"
               :disabled="!basicInfo.brandId"
             >
@@ -219,20 +219,20 @@
             />
           </el-form-item>
           <el-form-item label="次背景色">
-            <el-color-picker v-model="uiConfig.theme_bg_second" :show-alpha="false" />
+            <el-color-picker v-model="uiConfig.theme_bg_second" :show-alpha="true" />
             <el-input
               v-model="uiConfig.theme_bg_second"
               style="margin-left: 10px;"
-              placeholder="输入次背景色（16进制）"
+              placeholder="输入次背景色（支持rgba格式）"
               @input="(value) => handleColorInput('theme_bg_second', value)"
             />
           </el-form-item>
           <el-form-item label="主文字色">
-            <el-color-picker v-model="uiConfig.theme_text_main" :show-alpha="false" />
+            <el-color-picker v-model="uiConfig.theme_text_main" :show-alpha="true" />
             <el-input
               v-model="uiConfig.theme_text_main"
               style="margin-left: 10px;"
-              placeholder="输入主文字色（16进制）"
+              placeholder="输入主文字色（支持rgba格式）"
               @input="(value) => handleColorInput('theme_text_main', value)"
             />
           </el-form-item>
@@ -245,13 +245,13 @@
         <p class="step-description">
           这些配置将存储到数据库中，并写入本地文件。如果不需要可以跳过。
         </p>
-        
+
         <div v-if="basicInfo.host === 'tth5'">
           <el-form :model="novelConfig" label-width="120px">
             <el-form-item label="TT跳转首页URL">
-              <el-input 
-                v-model="novelConfig.tt_jump_home_url" 
-                placeholder="例如：https://paps.funshion.com/v1/applet/createschema"
+              <el-input
+                v-model="novelConfig.tt_jump_home_url"
+                placeholder="例如：sslocal://miniapp?ticket=v1_3532788994"
                 clearable
               >
                 <template #append>
@@ -262,10 +262,10 @@
               </el-input>
               <span class="form-tip">头条小程序跳转首页的URL</span>
             </el-form-item>
-            
+
             <el-form-item label="TT登录回调域名">
-              <el-input 
-                v-model="novelConfig.tt_login_callback_domain" 
+              <el-input
+                v-model="novelConfig.tt_login_callback_domain"
                 placeholder="例如：novetest.fun.tv"
                 clearable
               />
@@ -273,7 +273,7 @@
             </el-form-item>
           </el-form>
         </div>
-        
+
         <div v-else class="step-description">
           <div></div>
           <el-empty description="当前端类型不支持小说特有配置" />
@@ -397,10 +397,10 @@ const extraBaseConfig = ref({
 
 const commonConfig = ref({
   deliver_business_id_enable: false,
-  deliver_business_id: '',
+  deliver_business_id: 'tt_h5_xingchen_business_type',
   deliver_switch_id_enable: false,
-  deliver_switch_id: '',
-  protocol_company: '',
+  deliver_switch_id: 'tt_h5_xingchen_public_switch',
+  protocol_company: '武汉风行在线技术有限公司',
   protocol_about: '',
   protocol_privacy: '',
   protocol_vod: '',
@@ -434,16 +434,21 @@ const novelConfig = ref({
 const isGeneratingUrl = ref(false)
 
 // 颜色格式验证函数
-const validateHexColor = (color) => {
+const validateColor = (color) => {
   if (!color) return true
-  const hexRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/
-  return hexRegex.test(color)
+  // 支持16进制格式：3位、6位、8位（带alpha通道）
+  const hexRegex = /^#([A-Fa-f0-9]{3}|[A-Fa-f0-9]{6}|[A-Fa-f0-9]{8})$/
+  // 支持rgba格式
+  const rgbaRegex = /^rgba?\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*(?:,\s*[\d.]+\s*)?\)$/
+  const isValid = hexRegex.test(color) || rgbaRegex.test(color)
+  console.log(`验证颜色: ${color}, 结果: ${isValid}`)
+  return isValid
 }
 
 // 颜色输入处理函数
 const handleColorInput = (field, value) => {
-  // 移除可能的rgba格式，只保留16进制
-  if (value && value.startsWith('rgba')) {
+  // 主背景色只允许16进制格式
+  if (field === 'theme_bg_main' && value && value.startsWith('rgba')) {
     // 如果是rgba格式，转换为16进制
     const rgbaMatch = value.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*[\d.]+)?\)/)
     if (rgbaMatch) {
@@ -453,6 +458,7 @@ const handleColorInput = (field, value) => {
       uiConfig.value[field] = `#${r}${g}${b}`
     }
   } else {
+    // 次背景色和主文字色允许rgba格式
     uiConfig.value[field] = value
   }
 }
@@ -485,7 +491,7 @@ const availableHosts = computed(() => {
 
   // 获取该品牌已有的host列表
   const existingHosts = selectedBrand.value.clients?.map(client => client.host) || []
-  
+
   // 所有可选的host
   const allHosts = [
     { label: 'H5', value: 'h5' },
@@ -506,8 +512,8 @@ const isCurrentHostAvailable = computed(() => {
 const canProceed = computed(() => {
   switch (currentStep.value) {
     case 0:
-      return basicInfo.value.brandId && 
-             basicInfo.value.host && 
+      return basicInfo.value.brandId &&
+             basicInfo.value.host &&
              isCurrentHostAvailable.value
     case 1:
       return baseConfig.value.app_name &&
@@ -535,11 +541,20 @@ const canProceed = computed(() => {
     case 3:
       return true // 支付配置都是可选的
     case 4:
-      return uiConfig.value.theme_bg_main &&
-             uiConfig.value.theme_bg_second &&
-             validateHexColor(uiConfig.value.theme_bg_main) &&
-             validateHexColor(uiConfig.value.theme_bg_second) &&
-             validateHexColor(uiConfig.value.theme_text_main)
+      const bgMainValid = uiConfig.value.theme_bg_main && validateColor(uiConfig.value.theme_bg_main)
+      const bgSecondValid = uiConfig.value.theme_bg_second && validateColor(uiConfig.value.theme_bg_second)
+      const textMainValid = uiConfig.value.theme_text_main && validateColor(uiConfig.value.theme_text_main)
+
+      console.log('UI配置验证:', {
+        theme_bg_main: uiConfig.value.theme_bg_main,
+        theme_bg_second: uiConfig.value.theme_bg_second,
+        theme_text_main: uiConfig.value.theme_text_main,
+        bgMainValid,
+        bgSecondValid,
+        textMainValid
+      })
+
+      return bgMainValid && bgSecondValid && textMainValid
     case 5:
       return basicInfo.value.host === 'tth5' ? true : true // 小说特有配置是可选的，只有tth5才显示表单
     default:
@@ -752,7 +767,7 @@ const createWebsite = async () => {
 // 生成头条跳转首页URL
 const generateTTUrl = async () => {
   isGeneratingUrl.value = true
-  
+
   try {
     // 构建请求参数
     const requestParam = {
@@ -760,21 +775,21 @@ const generateTTUrl = async () => {
       path: 'pages/homePage/homePage',
       query: JSON.stringify({})
     }
-    
+
     // 设置请求头
     const header = {
       'Content-Type': 'application/x-www-form-urlencoded',
     }
-    
+
     // 发送POST请求
     const response = await fetch('https://paps.funshion.com/v1/applet/createschema', {
       method: 'POST',
       headers: header,
       body: new URLSearchParams(requestParam)
     })
-    
+
     const result = await response.json()
-    
+
     if (result.data && result.data.schema) {
       novelConfig.value.tt_jump_home_url = result.data.schema
       ElMessage.success('头条跳转首页URL生成成功！')
@@ -827,6 +842,11 @@ watch(() => baseConfig.value, (conf) => {
   sameChangeKeyArr.forEach( item => {
     if (conf[item]) extraBaseConfig.value[item] = conf[item]
   })
+  conf['cl'] = conf['app_code']
+  if (conf['app_code']) {
+    extraBaseConfig.value['app_code'] = conf['app_code'].replace('_h5_', '_miniapp_')
+    extraBaseConfig.value['cl'] = extraBaseConfig.value['app_code']
+  }
 }, {
   deep: true
 })
