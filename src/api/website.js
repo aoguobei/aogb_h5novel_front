@@ -14,5 +14,15 @@ export const websiteApi = {
   // 获取所有客户端
   getAllClients() {
     return request.get('/clients')
+  },
+  
+  // 删除客户端
+  deleteClient(clientId) {
+    return request.delete(`/clients/${clientId}`)
+  },
+  
+  // 删除网站（包含所有配置和文件）
+  deleteWebsite(clientId) {
+    return request.delete(`/website/${clientId}`)
   }
 } 

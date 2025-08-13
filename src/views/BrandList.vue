@@ -116,7 +116,7 @@ const editBrand = (brand) => {
 
 // 查看品牌网站
 const viewBrandWebsites = (brand) => {
-  router.push('/website-configs')
+  router.push(`/brand/${brand.id}/clients`)
 }
 
 onMounted(() => {

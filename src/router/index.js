@@ -3,6 +3,7 @@ import BrandList from '../views/BrandList.vue'
 import CreateWebsite from '../views/CreateWebsite.vue'
 import WebsiteConfig from '../views/WebsiteConfig.vue'
 import WebsiteConfigs from '../views/WebsiteConfigs.vue'
+import BrandClients from '../views/BrandClients.vue'
 
 const routes = [
   {
@@ -26,6 +27,12 @@ const routes = [
     path: '/website-configs',
     name: 'WebsiteConfigs',
     component: WebsiteConfigs
+  },
+  {
+    path: '/brand/:brandId/clients',
+    name: 'BrandClients',
+    component: BrandClients,
+    props: true
   }
 ]
 

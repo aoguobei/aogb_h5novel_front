@@ -31,7 +31,13 @@
       <!-- 基础配置 -->
       <el-card class="config-card" v-if="config.base_config">
         <template #header>
-          <span>基础配置</span>
+          <div class="card-header-with-actions">
+            <span>基础配置</span>
+            <el-button type="primary" size="small" @click="openEditBaseConfig">
+              <el-icon><Edit /></el-icon>
+              编辑
+            </el-button>
+          </div>
         </template>
         <el-descriptions :column="2" border>
           <el-descriptions-item label="应用名称">{{ config.base_config.app_name }}</el-descriptions-item>
@@ -49,7 +55,13 @@
       <!-- 通用配置 -->
       <el-card class="config-card" v-if="config.common_config">
         <template #header>
-          <span>通用配置</span>
+          <div class="card-header-with-actions">
+            <span>通用配置</span>
+            <el-button type="primary" size="small" @click="openEditCommonConfig">
+              <el-icon><Edit /></el-icon>
+              编辑
+            </el-button>
+          </div>
         </template>
         <el-descriptions :column="2" border>
           <el-descriptions-item label="启用Business ID">
@@ -95,7 +107,13 @@
       <!-- 支付配置 -->
       <el-card class="config-card" v-if="config.pay_config">
         <template #header>
-          <span>支付配置</span>
+          <div class="card-header-with-actions">
+            <span>支付配置</span>
+            <el-button type="primary" size="small" @click="openEditPayConfig">
+              <el-icon><Edit /></el-icon>
+              编辑
+            </el-button>
+          </div>
         </template>
         <el-descriptions :column="3" border>
           <el-descriptions-item label="启用普通支付">
@@ -118,7 +136,13 @@
       <!-- UI配置 -->
       <el-card class="config-card" v-if="config.ui_config">
         <template #header>
-          <span>UI配置</span>
+          <div class="card-header-with-actions">
+            <span>UI配置</span>
+            <el-button type="primary" size="small" @click="openEditUIConfig">
+              <el-icon><Edit /></el-icon>
+              编辑
+            </el-button>
+          </div>
         </template>
         <el-descriptions :column="2" border>
           <el-descriptions-item label="主背景色">
@@ -146,7 +170,13 @@
       <!-- 小说配置 -->
       <el-card class="config-card" v-if="config.novel_config">
         <template #header>
-          <span>小说配置</span>
+          <div class="card-header-with-actions">
+            <span>小说配置</span>
+            <el-button type="primary" size="small" @click="openEditNovelConfig">
+              <el-icon><Edit /></el-icon>
+              编辑
+            </el-button>
+          </div>
         </template>
         <el-descriptions :column="2" border>
           <el-descriptions-item label="TT跳转首页URL">
@@ -168,20 +198,76 @@
         <el-button @click="$router.go(-1)">返回</el-button>
       </div>
     </div>
+
+    <!-- 编辑器组件 -->
+    <BaseConfigEditor
+      v-model:visible="editBaseConfigVisible"
+      :config="config?.base_config"
+      :client-id="route.params.clientId"
+      @save="handleBaseConfigSave"
+      @cancel="editBaseConfigVisible = false"
+    />
+
+    <CommonConfigEditor
+      v-model:visible="editCommonConfigVisible"
+      :config="config?.common_config"
+      :client-id="route.params.clientId"
+      @save="handleCommonConfigSave"
+      @cancel="editCommonConfigVisible = false"
+    />
+
+    <PayConfigEditor
+      v-model:visible="editPayConfigVisible"
+      :config="config?.pay_config"
+      :client-id="route.params.clientId"
+      @save="handlePayConfigSave"
+      @cancel="editPayConfigVisible = false"
+    />
+
+    <UIConfigEditor
+      v-model:visible="editUIConfigVisible"
+      :config="config?.ui_config"
+      :client-id="route.params.clientId"
+      @save="handleUIConfigSave"
+      @cancel="editUIConfigVisible = false"
+    />
+
+    <NovelConfigEditor
+      v-model:visible="editNovelConfigVisible"
+      :config="config?.novel_config"
+      :client-id="route.params.clientId"
+      @save="handleNovelConfigSave"
+      @cancel="editNovelConfigVisible = false"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { Loading } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Loading, Edit } from '@element-plus/icons-vue'
 import { websiteApi } from '@/api/website'
+import { configApi } from '@/api/config'
+import {
+  BaseConfigEditor,
+  CommonConfigEditor,
+  PayConfigEditor,
+  UIConfigEditor,
+  NovelConfigEditor
+} from '@/components/config-editors'
 
 const route = useRoute()
 const router = useRouter()
 const config = ref(null)
 const loading = ref(false)
+
+// 编辑弹窗显示状态
+const editBaseConfigVisible = ref(false)
+const editCommonConfigVisible = ref(false)
+const editPayConfigVisible = ref(false)
+const editUIConfigVisible = ref(false)
+const editNovelConfigVisible = ref(false)
 
 // 格式化日期
 const formatDate = (dateString) => {
@@ -202,6 +288,68 @@ const fetchConfig = async () => {
   } finally {
     loading.value = false
   }
+}
+
+// 打开编辑弹窗的方法
+const openEditBaseConfig = () => {
+  if (!config.value?.base_config) {
+    ElMessage.warning('基础配置不存在')
+    return
+  }
+  editBaseConfigVisible.value = true
+}
+
+const openEditCommonConfig = () => {
+  if (!config.value?.common_config) {
+    ElMessage.warning('通用配置不存在')
+    return
+  }
+  editCommonConfigVisible.value = true
+}
+
+const openEditPayConfig = () => {
+  if (!config.value?.pay_config) {
+    ElMessage.warning('支付配置不存在')
+    return
+  }
+  editPayConfigVisible.value = true
+}
+
+const openEditUIConfig = () => {
+  if (!config.value?.ui_config) {
+    ElMessage.warning('UI配置不存在')
+    return
+  }
+  editUIConfigVisible.value = true
+}
+
+const openEditNovelConfig = () => {
+  if (!config.value?.novel_config) {
+    ElMessage.warning('小说配置不存在')
+    return
+  }
+  editNovelConfigVisible.value = true
+}
+
+// 处理保存成功后的回调
+const handleBaseConfigSave = async (data) => {
+  await fetchConfig()
+}
+
+const handleCommonConfigSave = async (data) => {
+  await fetchConfig()
+}
+
+const handlePayConfigSave = async (data) => {
+  await fetchConfig()
+}
+
+const handleUIConfigSave = async (data) => {
+  await fetchConfig()
+}
+
+const handleNovelConfigSave = async (data) => {
+  await fetchConfig()
 }
 
 // 编辑配置
@@ -262,6 +410,12 @@ onMounted(() => {
 .info-card,
 .config-card {
   margin-bottom: 20px;
+}
+
+.card-header-with-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .text-content {
