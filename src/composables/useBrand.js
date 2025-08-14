@@ -12,7 +12,16 @@ export function useBrand() {
     try {
       const response = await brandApi.getBrands()
       // 统一适配包装结构
-      brands.value = response.data.data || []
+      const brandsData = response.data.data || []
+      
+      // 按创建时间倒序排列（从新到旧）
+      brandsData.sort((a, b) => {
+        const dateA = new Date(a.created_at || 0)
+        const dateB = new Date(b.created_at || 0)
+        return dateB - dateA
+      })
+      
+      brands.value = brandsData
     } catch (error) {
       ElMessage.error('获取品牌列表失败')
     } finally {

@@ -14,7 +14,7 @@
       label-width="180px"
       label-position="left"
     >
-      <el-form-item label="TT跳转首页URL" prop="tt_jump_home_url">
+      <el-form-item label="跳转抖音小程序首页URL" prop="tt_jump_home_url" required>
         <el-input
           v-model="form.tt_jump_home_url"
           placeholder="例如：sslocal://miniapp?ticket=v1_3532788994"
@@ -26,16 +26,16 @@
             </el-button>
           </template>
         </el-input>
-        <span class="form-tip">头条小程序跳转首页的URL</span>
+        <span class="form-tip">抖音小程序跳转首页的URL</span>
       </el-form-item>
-      
-      <el-form-item label="TT登录回调域名" prop="tt_login_callback_domain">
+
+      <el-form-item label="抖音h5登录回调域名" prop="tt_login_callback_domain" required>
         <el-input
           v-model="form.tt_login_callback_domain"
           placeholder="例如：novetest.fun.tv"
           clearable
         />
-        <span class="form-tip">头条登录回调的域名</span>
+        <span class="form-tip">抖音登录回调的域名</span>
       </el-form-item>
     </el-form>
 
@@ -137,7 +137,7 @@ const generateTTUrl = async () => {
 
     if (result.data && result.data.schema) {
       form.value.tt_jump_home_url = result.data.schema
-      ElMessage.success('头条跳转首页URL生成成功！')
+      ElMessage.success('抖音跳转首页URL生成成功！')
     } else {
       ElMessage.error('生成URL失败：' + (result.message || '未知错误'))
     }
@@ -196,4 +196,4 @@ const handleClose = () => {
   font-size: 12px;
   color: #909399;
 }
-</style> 
+</style>

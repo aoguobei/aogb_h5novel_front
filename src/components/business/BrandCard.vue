@@ -1,31 +1,31 @@
 <template>
   <el-card class="brand-card" shadow="hover">
     <div class="brand-content">
-      <!-- 品牌图标和标题区域 -->
-      <div class="brand-header">
-        <div class="brand-icon">
-          <el-icon size="24"><Shop /></el-icon>
-        </div>
-        <div class="brand-title">
-          <h3>{{ brand.code }}</h3>
-          <p class="brand-subtitle">品牌代码</p>
-        </div>
-      </div>
-
-      <!-- 品牌信息区域 -->
-      <div class="brand-info">
-        <div class="info-row">
-          <div class="info-item">
-            <el-icon><Calendar /></el-icon>
-            <span class="info-text">创建时间: {{ formatDate(brand.created_at) }}</span>
+      <div>
+        <!-- 品牌图标和标题区域 -->
+        <div class="brand-header">
+          <div class="brand-icon">
+            <el-icon size="24"><Shop /></el-icon>
           </div>
-          <div class="info-item">
-            <el-icon><Link /></el-icon>
-            <span class="info-text">客户端数量: {{ brand.clients?.length || 0 }} 个</span>
+          <div class="brand-title">
+            <h3>{{ brand.code }}</h3>
+            <p class="brand-subtitle">品牌代码</p>
           </div>
         </div>
+        <!-- 品牌信息区域 -->
+        <div class="brand-info">
+          <div class="info-row">
+            <div class="info-item">
+              <el-icon><Calendar /></el-icon>
+              <span class="info-text">创建时间: {{ formatDate(brand.created_at) }}</span>
+            </div>
+            <div class="info-item">
+              <el-icon><Link /></el-icon>
+              <span class="info-text">客户端数量: {{ brand.clients?.length || 0 }} 个</span>
+            </div>
+          </div>
+        </div>
       </div>
-
       <!-- 操作按钮区域 -->
       <div class="brand-actions">
         <el-button
@@ -34,22 +34,7 @@
           @click="$emit('view', brand)"
           :icon="View"
         >
-          查看网站
-        </el-button>
-        <el-button
-          size="small"
-          @click="$emit('edit', brand)"
-          :icon="Edit"
-        >
-          编辑
-        </el-button>
-        <el-button
-          type="danger"
-          size="small"
-          @click="$emit('delete', brand)"
-          :icon="Delete"
-        >
-          删除
+          查看客户端
         </el-button>
       </div>
     </div>
@@ -57,7 +42,7 @@
 </template>
 
 <script setup>
-import { Shop, Calendar, Link, View, Edit, Delete } from '@element-plus/icons-vue'
+import { Shop, Calendar, Link, View, } from '@element-plus/icons-vue'
 
 const formatDate = (date) => {
   if (!date) return '-'
@@ -71,7 +56,7 @@ defineProps({
   }
 })
 
-defineEmits(['view', 'edit', 'delete'])
+defineEmits(['view',])
 </script>
 
 <style scoped>
@@ -89,6 +74,9 @@ defineEmits(['view', 'edit', 'delete'])
 
 .brand-content {
   padding: 12px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .brand-header {

@@ -120,7 +120,7 @@ const hasTtConfig = (website) => {
 
 const getHostDisplayName = (host) => {
   const hostMap = {
-    'tt': '头条小程序',
+    'tt': '抖音小程序',
     'ks': '快手小程序'
   }
   return hostMap[host] || host

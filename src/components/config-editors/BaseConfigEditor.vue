@@ -14,11 +14,11 @@
       label-width="140px"
       label-position="left"
     >
-      <el-form-item label="应用名称" prop="app_name">
-        <el-input v-model="form.app_name" placeholder="请输入应用名称" />
+      <el-form-item label="应用名称" prop="app_name" required>
+        <el-input v-model="form.app_name" placeholder="输入app_name" />
       </el-form-item>
       
-      <el-form-item label="平台" prop="platform">
+      <el-form-item label="平台" prop="platform" required>
         <el-select v-model="form.platform" placeholder="请选择平台">
           <el-option label="Android" value="android" />
           <el-option label="iOS" value="ios" />
@@ -28,32 +28,32 @@
         </el-select>
       </el-form-item>
       
-      <el-form-item label="应用代码" prop="app_code">
-        <el-input v-model="form.app_code" placeholder="请输入应用代码" />
+      <el-form-item label="app_code" prop="app_code" required>
+        <el-input v-model="form.app_code" placeholder="输入app_code" />
       </el-form-item>
       
-      <el-form-item label="产品" prop="product">
-        <el-input v-model="form.product" placeholder="请输入产品名称" />
+      <el-form-item label="产品" prop="product" required>
+        <el-input v-model="form.product" placeholder="输入product" />
       </el-form-item>
       
-      <el-form-item label="客户" prop="customer">
-        <el-input v-model="form.customer" placeholder="请输入客户名称" />
+      <el-form-item label="customer" prop="customer" required>
+        <el-input v-model="form.customer" placeholder="输入customer" />
       </el-form-item>
       
-      <el-form-item label="应用ID" prop="appid">
-        <el-input v-model="form.appid" placeholder="请输入应用ID" />
+      <el-form-item label="应用ID" prop="appid" required>
+        <el-input v-model="form.appid" placeholder="输入appid" />
       </el-form-item>
       
-      <el-form-item label="版本" prop="version">
-        <el-input v-model="form.version" placeholder="请输入版本号" />
+      <el-form-item label="版本" prop="version" required>
+        <el-input v-model="form.version" placeholder="输入version" />
       </el-form-item>
       
-      <el-form-item label="渠道代码" prop="cl">
-        <el-input v-model="form.cl" placeholder="请输入渠道代码" />
+      <el-form-item label="cl" prop="cl" required>
+        <el-input v-model="form.cl" placeholder="输入cl" />
       </el-form-item>
       
-      <el-form-item label="UC代码" prop="uc">
-        <el-input v-model="form.uc" placeholder="请输入UC代码" />
+      <el-form-item label="uc" prop="uc">
+        <el-input v-model="form.uc" placeholder="输入uc" />
       </el-form-item>
     </el-form>
 

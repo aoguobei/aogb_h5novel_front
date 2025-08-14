@@ -29,7 +29,7 @@
       </el-card>
 
       <!-- 基础配置 -->
-      <el-card class="config-card" v-if="config.base_config">
+      <el-card class="config-card" v-if="config.base_config?.id>0">
         <template #header>
           <div class="card-header-with-actions">
             <span>基础配置</span>
@@ -53,7 +53,7 @@
       </el-card>
 
       <!-- 通用配置 -->
-      <el-card class="config-card" v-if="config.common_config">
+      <el-card class="config-card" v-if="config.common_config?.id > 0">
         <template #header>
           <div class="card-header-with-actions">
             <span>通用配置</span>
@@ -69,15 +69,15 @@
               {{ config.common_config.deliver_business_id_enable ? '是' : '否' }}
             </el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="Business ID">{{ config.common_config.deliver_business_id || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="Business ID">{{ config.common_config.deliver_business_id || '' }}</el-descriptions-item>
           <el-descriptions-item label="启用Switch ID">
             <el-tag :type="config.common_config.deliver_switch_id_enable ? 'success' : 'info'">
               {{ config.common_config.deliver_switch_id_enable ? '是' : '否' }}
             </el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="Switch ID">{{ config.common_config.deliver_switch_id || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="协议公司">{{ config.common_config.protocol_company || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="脚本基础">{{ config.common_config.script_base || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="Switch ID">{{ config.common_config.deliver_switch_id || '' }}</el-descriptions-item>
+          <el-descriptions-item label="协议公司">{{ config.common_config.protocol_company || '' }}</el-descriptions-item>
+          <el-descriptions-item label="脚本基础">{{ config.common_config.script_base || '' }}</el-descriptions-item>
           <el-descriptions-item label="联系URL" :span="2">
             <el-link v-if="config.common_config.contact_url" :href="config.common_config.contact_url" target="_blank" type="primary">
               {{ config.common_config.contact_url }}
@@ -90,22 +90,22 @@
         <el-divider content-position="left">协议内容</el-divider>
         <el-descriptions :column="1" border>
           <el-descriptions-item label="用户协议">
-            <div class="text-content">{{ config.common_config.protocol_about || '-' }}</div>
+            <div class="text-content">{{ config.common_config.protocol_about || '' }}</div>
           </el-descriptions-item>
           <el-descriptions-item label="隐私协议">
-            <div class="text-content">{{ config.common_config.protocol_privacy || '-' }}</div>
+            <div class="text-content">{{ config.common_config.protocol_privacy || '' }}</div>
           </el-descriptions-item>
           <el-descriptions-item label="付费协议">
-            <div class="text-content">{{ config.common_config.protocol_vod || '-' }}</div>
+            <div class="text-content">{{ config.common_config.protocol_vod || '' }}</div>
           </el-descriptions-item>
           <el-descriptions-item label="用户取消协议">
-            <div class="text-content">{{ config.common_config.protocol_user_cancel || '-' }}</div>
+            <div class="text-content">{{ config.common_config.protocol_user_cancel || '' }}</div>
           </el-descriptions-item>
         </el-descriptions>
       </el-card>
 
       <!-- 支付配置 -->
-      <el-card class="config-card" v-if="config.pay_config">
+      <el-card class="config-card" v-if="config.pay_config?.id > 0">
         <template #header>
           <div class="card-header-with-actions">
             <span>支付配置</span>
@@ -121,20 +121,20 @@
               {{ config.pay_config.normal_pay_enable ? '是' : '否' }}
             </el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="Android网关ID">{{ config.pay_config.normal_pay_gateway_android || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="iOS网关ID">{{ config.pay_config.normal_pay_gateway_ios || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="Android网关ID">{{ config.pay_config.normal_pay_gateway_android || '' }}</el-descriptions-item>
+          <el-descriptions-item label="iOS网关ID">{{ config.pay_config.normal_pay_gateway_ios || '' }}</el-descriptions-item>
           <el-descriptions-item label="启用连包支付">
             <el-tag :type="config.pay_config.renew_pay_enable ? 'success' : 'info'">
               {{ config.pay_config.renew_pay_enable ? '是' : '否' }}
             </el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="续费Android网关ID">{{ config.pay_config.renew_pay_gateway_android || '-' }}</el-descriptions-item>
-          <el-descriptions-item label="续费iOS网关ID">{{ config.pay_config.renew_pay_gateway_ios || '-' }}</el-descriptions-item>
+          <el-descriptions-item label="续费Android网关ID">{{ config.pay_config.renew_pay_gateway_android || '' }}</el-descriptions-item>
+          <el-descriptions-item label="续费iOS网关ID">{{ config.pay_config.renew_pay_gateway_ios || '' }}</el-descriptions-item>
         </el-descriptions>
       </el-card>
 
       <!-- UI配置 -->
-      <el-card class="config-card" v-if="config.ui_config">
+      <el-card class="config-card" v-if="config.ui_config?.id>0">
         <template #header>
           <div class="card-header-with-actions">
             <span>UI配置</span>
@@ -168,7 +168,7 @@
       </el-card>
 
       <!-- 小说配置 -->
-      <el-card class="config-card" v-if="config.novel_config">
+      <el-card class="config-card" v-if="config.novel_config?.id>0">
         <template #header>
           <div class="card-header-with-actions">
             <span>小说配置</span>
@@ -186,14 +186,13 @@
             <span v-else>-</span>
           </el-descriptions-item>
           <el-descriptions-item label="TT登录回调域名">
-            <span>{{ config.novel_config.tt_login_callback_domain || '-' }}</span>
+            <span>{{ config.novel_config.tt_login_callback_domain || '' }}</span>
           </el-descriptions-item>
         </el-descriptions>
       </el-card>
 
       <!-- 操作按钮 -->
       <div class="actions">
-        <el-button type="primary" @click="editConfig">编辑配置</el-button>
         <el-button type="success" @click="goToWebsiteConfigs">网站列表</el-button>
         <el-button @click="$router.go(-1)">返回</el-button>
       </div>
@@ -350,11 +349,6 @@ const handleUIConfigSave = async (data) => {
 
 const handleNovelConfigSave = async (data) => {
   await fetchConfig()
-}
-
-// 编辑配置
-const editConfig = () => {
-  ElMessage.info('编辑功能将在后续版本中实现')
 }
 
 // 跳转到网站配置列表

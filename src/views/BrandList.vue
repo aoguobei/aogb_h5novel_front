@@ -19,24 +19,22 @@
 
     <div class="content-area">
       <LoadingSpinner v-if="loading" />
-      
-      <el-empty 
-        v-else-if="!brands.length" 
+
+      <el-empty
+        v-else-if="!brands.length"
         description="暂无品牌数据"
       >
         <el-button type="primary" @click="showCreateDialog = true">
           创建第一个品牌
         </el-button>
       </el-empty>
-      
+
       <div v-else class="brands-grid">
         <BrandCard
           v-for="brand in brands"
           :key="brand.id"
           :brand="brand"
           @view="viewBrandWebsites"
-          @edit="editBrand"
-          @delete="handleDeleteBrand"
         />
       </div>
     </div>
@@ -87,31 +85,6 @@ const handleCreateBrand = async () => {
     showCreateDialog.value = false
     newBrand.value.code = ''
   }
-}
-
-// 删除品牌
-const handleDeleteBrand = async (brand) => {
-  try {
-  return ElMessage.info('删除功能暂未实现')
-    await ElMessageBox.confirm(
-      `确定要删除品牌 "${brand.code}" 吗？`,
-      '警告',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }
-    )
-    
-    await deleteBrand(brand)
-  } catch (error) {
-    // 用户取消删除
-  }
-}
-
-// 编辑品牌
-const editBrand = (brand) => {
-  ElMessage.info('编辑功能暂未实现')
 }
 
 // 查看品牌网站

@@ -17,7 +17,7 @@
     </div>
 
     <LoadingSpinner v-if="loading" />
-    
+
     <el-alert
       v-else-if="error"
       :title="error"
@@ -25,16 +25,16 @@
       show-icon
       :closable="false"
     />
-    
-    <el-empty 
-      v-else-if="!clients.length" 
-      description="该品牌暂无客户端" 
+
+    <el-empty
+      v-else-if="!clients.length"
+      description="该品牌暂无客户端"
     />
-    
+
     <div v-else class="clients-container">
-      <el-card 
-        v-for="client in clients" 
-        :key="client.id" 
+      <el-card
+        v-for="client in clients"
+        :key="client.id"
         class="client-card"
         shadow="hover"
       >
@@ -51,16 +51,16 @@
             </div>
           </div>
           <div class="client-actions">
-            <el-button 
-              type="primary" 
+            <el-button
+              type="primary"
               size="small"
               @click="viewDetails(client)"
             >
               <el-icon><View /></el-icon>
               查看详情
             </el-button>
-            <el-button 
-              type="danger" 
+            <el-button
+              type="danger"
               size="small"
               @click="confirmDelete(client)"
             >
@@ -72,35 +72,35 @@
 
         <div class="client-configs">
           <div class="config-status">
-            <el-tag 
-              :type="client.base_configs?.length ? 'success' : 'info'" 
+            <el-tag
+              :type="client.base_configs?.length ? 'success' : 'info'"
               size="small"
             >
-              基础配置: {{ client.base_configs?.length || 0 }}
+              基础配置
             </el-tag>
-            <el-tag 
-              :type="client.common_configs?.length ? 'success' : 'info'" 
+            <el-tag
+              :type="client.common_configs?.length ? 'success' : 'info'"
               size="small"
             >
-              通用配置: {{ client.common_configs?.length || 0 }}
+              通用配置
             </el-tag>
-            <el-tag 
-              :type="client.pay_configs?.length ? 'success' : 'info'" 
+            <el-tag
+              :type="client.pay_configs?.length ? 'success' : 'info'"
               size="small"
             >
-              支付配置: {{ client.pay_configs?.length || 0 }}
+              支付配置
             </el-tag>
-            <el-tag 
-              :type="client.ui_configs?.length ? 'success' : 'info'" 
+            <el-tag
+              :type="client.ui_configs?.length ? 'success' : 'info'"
               size="small"
             >
-              UI配置: {{ client.ui_configs?.length || 0 }}
+              UI配置
             </el-tag>
-            <el-tag 
-              :type="client.novel_configs?.length ? 'success' : 'info'" 
+            <el-tag
+              :type="client.novel_configs?.length ? 'success' : 'info'"
               size="small"
             >
-              小说配置: {{ client.novel_configs?.length || 0 }}
+              小说配置
             </el-tag>
           </div>
         </div>
@@ -115,7 +115,7 @@
     >
       <p>确定要删除客户端 <strong>{{ clientToDelete?.host }}</strong> 吗？</p>
       <p class="warning-text">此操作不可恢复，请谨慎操作！</p>
-      
+
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="deleteDialogVisible = false">取消</el-button>
@@ -161,9 +161,10 @@ const clients = computed(() => {
     .filter(website => website.client.brand_id === brandId.value)
     .map(website => website.client)
     .sort((a, b) => {
-      // 自定义排序：h5, tth5, ksh5, tt, ks
-      const order = { 'h5': 1, 'tth5': 2, 'ksh5': 3, 'tt': 4, 'ks': 5 }
-      return (order[a.host] || 999) - (order[b.host] || 999)
+      // 按创建时间倒序排列（从新到旧）
+      const dateA = new Date(a.created_at || 0)
+      const dateB = new Date(b.created_at || 0)
+      return dateB - dateA
     })
 })
 
@@ -171,9 +172,9 @@ const clients = computed(() => {
 const getHostDisplayName = (host) => {
   const hostMap = {
     'h5': 'H5',
-    'tth5': '头条H5',
+    'tth5': '抖音H5',
     'ksh5': '快手H5',
-    'tt': '头条小程序',
+    'tt': '抖音小程序',
     'ks': '快手小程序'
   }
   return hostMap[host] || host
@@ -210,15 +211,15 @@ const confirmDelete = (client) => {
 // 删除客户端
 const deleteClient = async () => {
   if (!clientToDelete.value) return
-  
+
   deleting.value = true
   try {
     await websiteApi.deleteWebsite(clientToDelete.value.id)
-    
+
     ElMessage.success('删除成功')
     deleteDialogVisible.value = false
     clientToDelete.value = null
-    
+
     // 重新获取数据，包含所有类型的客户端
     await fetchWebsites(true)
   } catch (error) {
@@ -348,4 +349,4 @@ onMounted(async () => {
   justify-content: flex-end;
   gap: 12px;
 }
-</style> 
+</style>

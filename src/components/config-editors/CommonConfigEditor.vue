@@ -15,42 +15,42 @@
       label-position="left"
     >
       <!-- Business ID 相关 -->
-      <el-form-item label="启用Business ID" prop="deliver_business_id_enable">
+      <el-form-item label="启用 Business ID" prop="deliver_business_id_enable">
         <el-switch v-model="form.deliver_business_id_enable" />
       </el-form-item>
       
       <el-form-item 
-        label="Business ID" 
+        label="Deliver Business ID" 
         prop="deliver_business_id"
         v-if="form.deliver_business_id_enable"
       >
-        <el-input v-model="form.deliver_business_id" placeholder="请输入Business ID" />
+        <el-input v-model="form.deliver_business_id" />
       </el-form-item>
 
       <!-- Switch ID 相关 -->
-      <el-form-item label="启用Switch ID" prop="deliver_switch_id_enable">
+      <el-form-item label="启用 Switch ID" prop="deliver_switch_id_enable">
         <el-switch v-model="form.deliver_switch_id_enable" />
       </el-form-item>
       
       <el-form-item 
-        label="Switch ID" 
+        label="Deliver Switch ID" 
         prop="deliver_switch_id"
         v-if="form.deliver_switch_id_enable"
       >
-        <el-input v-model="form.deliver_switch_id" placeholder="请输入Switch ID" />
+        <el-input v-model="form.deliver_switch_id" />
       </el-form-item>
 
       <!-- 其他配置 -->
-      <el-form-item label="协议公司" prop="protocol_company">
-        <el-input v-model="form.protocol_company" placeholder="请输入协议公司名称" />
+      <el-form-item label="公司名称" prop="protocol_company" required>
+        <el-input v-model="form.protocol_company" />
       </el-form-item>
 
-      <el-form-item label="脚本基础" prop="script_base">
-        <el-input v-model="form.script_base" placeholder="请输入脚本基础路径" />
+      <el-form-item label="部署目录url" prop="script_base" required>
+        <el-input v-model="form.script_base" placeholder="/tt/xingchen/" />
       </el-form-item>
 
-      <el-form-item label="联系URL" prop="contact_url">
-        <el-input v-model="form.contact_url" placeholder="请输入联系URL" />
+      <el-form-item label="联系客服URL" prop="contact_url" required>
+        <el-input v-model="form.contact_url" type="textarea" />
       </el-form-item>
 
       <!-- 协议内容 -->

@@ -71,11 +71,11 @@ export function useWebsite() {
         return websiteData
       })
       
-      // 按品牌名排序
+      // 按app_name排序
       websitesWithConfigs.sort((a, b) => {
-        const brandA = a.client.brand?.code || ''
-        const brandB = b.client.brand?.code || ''
-        return brandA.localeCompare(brandB)
+        const appNameA = a.base_config?.app_name || ''
+        const appNameB = b.base_config?.app_name || ''
+        return appNameA.localeCompare(appNameB, 'zh-CN')
       })
       
       websites.value = websitesWithConfigs

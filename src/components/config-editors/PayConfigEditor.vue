@@ -24,11 +24,11 @@
         label="Android网关ID" 
         prop="normal_pay_gateway_android"
         v-if="form.normal_pay_enable"
+        required
       >
         <el-input-number 
           v-model="form.normal_pay_gateway_android" 
           :min="0" 
-          placeholder="请输入Android网关ID"
         />
       </el-form-item>
       
@@ -36,11 +36,11 @@
         label="iOS网关ID" 
         prop="normal_pay_gateway_ios"
         v-if="form.normal_pay_enable"
+        required
       >
         <el-input-number 
           v-model="form.normal_pay_gateway_ios" 
           :min="0" 
-          placeholder="请输入iOS网关ID"
         />
       </el-form-item>
 
@@ -54,11 +54,11 @@
         label="Android网关ID" 
         prop="renew_pay_gateway_android"
         v-if="form.renew_pay_enable"
+        required
       >
         <el-input-number 
           v-model="form.renew_pay_gateway_android" 
           :min="0" 
-          placeholder="请输入Android网关ID"
         />
       </el-form-item>
       
@@ -66,11 +66,11 @@
         label="iOS网关ID" 
         prop="renew_pay_gateway_ios"
         v-if="form.renew_pay_enable"
+        required
       >
         <el-input-number 
           v-model="form.renew_pay_gateway_ios" 
           :min="0" 
-          placeholder="请输入iOS网关ID"
         />
       </el-form-item>
     </el-form>

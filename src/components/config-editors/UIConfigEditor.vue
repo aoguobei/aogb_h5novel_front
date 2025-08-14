@@ -14,7 +14,7 @@
       label-width="140px"
       label-position="left"
     >
-      <el-form-item label="主背景色" prop="theme_bg_main">
+      <el-form-item label="主背景色" prop="theme_bg_main" required>
         <el-color-picker v-model="form.theme_bg_main" :show-alpha="false" />
         <el-input
           v-model="form.theme_bg_main"
@@ -24,7 +24,7 @@
         />
       </el-form-item>
       
-      <el-form-item label="次背景色" prop="theme_bg_second">
+      <el-form-item label="次背景色" prop="theme_bg_second" required>
         <el-color-picker v-model="form.theme_bg_second" :show-alpha="true" />
         <el-input
           v-model="form.theme_bg_second"
@@ -34,7 +34,7 @@
         />
       </el-form-item>
       
-      <el-form-item label="主文字色" prop="theme_text_main">
+      <el-form-item label="主文字色" prop="theme_text_main" required>
         <el-color-picker v-model="form.theme_text_main" :show-alpha="true" />
         <el-input
           v-model="form.theme_text_main"

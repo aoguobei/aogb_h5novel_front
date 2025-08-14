@@ -3,13 +3,11 @@
     <template #header>
       <div class="card-header">
         <div class="website-info">
-          <h3>{{ getWebsiteDisplayName(website) }}</h3>
-          <p class="website-details">
-            <el-tag :type="getHostTagType(website.client.host)" size="small">
-              {{ getHostDisplayName(website.client.host) }}
-            </el-tag>
-            <span class="brand-code">{{ website.client.brand.code }}</span>
-          </p>
+          <div class="website-name">{{ getWebsiteDisplayName(website) }}</div>
+          <el-tag :type="getHostTagType(website.client.host)" size="small">
+            {{ getHostDisplayName(website.client.host) }}
+          </el-tag>
+          <span class="brand-code">{{ website.client.brand.code }}</span>
         </div>
         <div class="card-actions">
           <el-button
@@ -42,14 +40,32 @@
         </div>
       </div>
 
-      <!-- 配置状态指示器 -->
-      <ConfigStatus :website="website" @viewExtra="$emit('viewExtra', $event)" />
+      <!-- 基础配置信息 -->
+      <div v-if="hasBaseConfig(website)" class="config-info-section">
+        <div class="config-row">
+          <div class="config-item">
+            <span class="config-label">cl:</span>
+            <span class="config-value">{{ website.base_config.cl || '-' }}</span>
+          </div>
+          <div class="config-item">
+            <span class="config-label">customer:</span>
+            <span class="config-value">{{ website.base_config.customer || '-' }}</span>
+          </div>
+          <div class="config-item">
+            <span class="config-label">product:</span>
+            <span class="config-value">{{ website.base_config.product || '-' }}</span>
+          </div>
+          <div class="config-item">
+            <span class="config-label">版本:</span>
+            <span class="config-value">{{ website.base_config.version || '-' }}</span>
+          </div>
+        </div>
+      </div>
     </div>
   </el-card>
 </template>
 
 <script setup>
-import ConfigStatus from './ConfigStatus.vue'
 
 const formatDate = (date) => {
   if (!date) return '-'
@@ -57,9 +73,8 @@ const formatDate = (date) => {
 }
 
 const getWebsiteDisplayName = (website) => {
-  const hostName = getHostDisplayName(website.client.host)
   const appName = hasBaseConfig(website) ? website.base_config.app_name : '未配置'
-  return `${hostName}-${appName}`
+  return appName
 }
 
 const hasBaseConfig = (website) => {
@@ -121,18 +136,15 @@ defineEmits(['toggle', 'view', 'viewExtra'])
   align-items: center;
 }
 
-.website-info h3 {
-  margin: 0 0 6px 0;
-  color: #303133;
-  font-size: 16px;
-}
-
-.website-details {
+.website-info {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin: 0;
-  font-size: 12px;
+  gap: 15px;
+}
+
+.website-info .website-name {
+  font-weight: bold;
+  min-width: 80px;;
 }
 
 .brand-code {
@@ -168,5 +180,44 @@ defineEmits(['toggle', 'view', 'viewExtra'])
 
 .time-value {
   color: #606266;
+}
+
+.config-info-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #ebeef5;
+}
+
+.config-row {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.config-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.config-label {
+  color: #606266;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.config-value {
+  background: #f0f9ff;
+  color: #1e40af;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 120px;
+  border: 1px solid #dbeafe;
 }
 </style> 

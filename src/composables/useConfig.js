@@ -42,9 +42,9 @@ export function useConfig() {
   const getHostDisplayName = (host) => {
     const hostMap = {
       'h5': 'H5',
-      'tth5': '头条H5',
+      'tth5': '抖音H5',
       'ksh5': '快手H5',
-      'tt': '头条小程序',
+      'tt': '抖音小程序',
       'ks': '快手小程序'
     }
     return hostMap[host] || host
