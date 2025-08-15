@@ -42,6 +42,17 @@
           当前选择的端类型已存在，请重新选择
         </div>
       </el-form-item>
+
+      <el-form-item label="业务类型" required>
+        <el-radio-group v-model="basicInfo.businessType" :disabled="!basicInfo.brandId">
+          <el-radio value="novel">小说</el-radio>
+          <el-radio value="video">影视</el-radio>
+          <el-radio value="tool">工具</el-radio>
+        </el-radio-group>
+        <div v-if="!basicInfo.brandId" class="form-tip">
+          请先选择品牌
+        </div>
+      </el-form-item>
     </el-form>
 
     <!-- 创建品牌对话框 -->

@@ -5,7 +5,7 @@
       <p class="step-description">这些配置将存储到数据库中，并写入本地文件。仅抖音H5端需要配置</p>
     </div>
 
-    <div v-if="basicInfo.host === 'tth5'">
+    <div v-if="basicInfo.host === 'tth5' && basicInfo.businessType === 'novel'">
       <el-form :model="novelConfig" label-width="200px" class="novel-config">
         <el-form-item label="跳转抖音小程序首页URL" required>
           <el-input
@@ -29,6 +29,10 @@
           />
         </el-form-item>
       </el-form>
+    </div>
+
+    <div v-else-if="basicInfo.host === 'tth5'" class="empty-config">
+      <el-empty description="当前业务类型不支持小说特有配置（仅小说类型支持）" />
     </div>
 
     <div v-else class="empty-config">

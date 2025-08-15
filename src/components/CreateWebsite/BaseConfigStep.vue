@@ -10,7 +10,7 @@
       <div class="section-title-icon">
         <el-icon><Setting /></el-icon>
       </div>
-      <span>{{ basicInfo.host.toUpperCase() }}端基础配置</span>
+      <span>{{ getHostName(basicInfo.host) }}端基础配置</span>
     </div>
     <el-form :model="baseConfig" label-width="120px">
       <div class="form-row">
@@ -63,45 +63,62 @@
         <span>{{ extraBaseConfigLabel }}</span>
       </div>
       <el-form :model="extraBaseConfig" label-width="120px">
-        <div class="form-row">
-          <el-form-item label="应用名称" required>
-            <el-input v-model="extraBaseConfig.app_name" placeholder="输入app_name" />
-          </el-form-item>
-          <el-form-item label="平台" required>
-            <el-input v-model="extraBaseConfig.platform" placeholder="输入platform" />
-          </el-form-item>
-        </div>
-
-        <div class="form-row">
-          <el-form-item label="app_code" required>
-            <el-input v-model="extraBaseConfig.app_code" placeholder="输入app_code" />
-          </el-form-item>
-          <el-form-item label="产品" required>
-            <el-input v-model="extraBaseConfig.product" placeholder="输入product" />
-          </el-form-item>
-        </div>
-
-        <div class="form-row">
-          <el-form-item label="customer" required>
-            <el-input v-model="extraBaseConfig.customer" placeholder="输入customer" />
-          </el-form-item>
-          <el-form-item label="应用ID" required>
-            <el-input v-model="extraBaseConfig.appid" placeholder="输入appid" />
-          </el-form-item>
-        </div>
-
-        <div class="form-row">
-          <el-form-item label="版本" required>
-            <el-input v-model="extraBaseConfig.version" placeholder="输入version" />
-          </el-form-item>
+        <!-- 抖音端：只显示cl字段 -->
+        <template v-if="props.basicInfo.host === 'tth5'">
           <el-form-item label="cl" required>
             <el-input v-model="extraBaseConfig.cl" placeholder="输入cl" />
           </el-form-item>
-        </div>
+        </template>
 
-        <el-form-item label="uc">
-          <el-input v-model="extraBaseConfig.uc" placeholder="输入uc" />
-        </el-form-item>
+        <!-- 快手端：只显示appid字段 -->
+        <template v-else-if="props.basicInfo.host === 'ksh5'">
+          <el-form-item label="应用ID" required>
+            <el-input v-model="extraBaseConfig.appid" placeholder="输入appid" />
+          </el-form-item>
+        </template>
+
+        <!-- 其他端：显示所有字段 -->
+        <template v-else>
+          <div class="form-row">
+            <el-form-item label="应用名称" required>
+              <el-input v-model="extraBaseConfig.app_name" placeholder="输入app_name" />
+            </el-form-item>
+            <el-form-item label="平台" required>
+              <el-input v-model="extraBaseConfig.platform" placeholder="输入platform" />
+            </el-form-item>
+          </div>
+
+          <div class="form-row">
+            <el-form-item label="app_code" required>
+              <el-input v-model="extraBaseConfig.app_code" placeholder="输入app_code" />
+            </el-form-item>
+            <el-form-item label="产品" required>
+              <el-input v-model="extraBaseConfig.product" placeholder="输入product" />
+            </el-form-item>
+          </div>
+
+          <div class="form-row">
+            <el-form-item label="customer" required>
+              <el-input v-model="extraBaseConfig.customer" placeholder="输入customer" />
+            </el-form-item>
+            <el-form-item label="应用ID" required>
+              <el-input v-model="extraBaseConfig.appid" placeholder="输入appid" />
+            </el-form-item>
+          </div>
+
+          <div class="form-row">
+            <el-form-item label="版本" required>
+              <el-input v-model="extraBaseConfig.version" placeholder="输入version" />
+            </el-form-item>
+            <el-form-item label="cl" required>
+              <el-input v-model="extraBaseConfig.cl" placeholder="输入cl" />
+            </el-form-item>
+          </div>
+
+          <el-form-item label="uc">
+            <el-input v-model="extraBaseConfig.uc" placeholder="输入uc" />
+          </el-form-item>
+        </template>
       </el-form>
     </div>
   </div>
@@ -110,6 +127,7 @@
 <script setup>
 import { computed } from 'vue'
 import { Setting } from '@element-plus/icons-vue'
+import { useConfig } from '@/composables/useConfig.js'
 
 const props = defineProps({
   basicInfo: {
@@ -127,14 +145,21 @@ const props = defineProps({
 })
 
 const needsExtraBaseConfig = computed(() => {
-  return props.basicInfo.host === 'tth5' || props.basicInfo.host === 'ksh5'
+  return props.basicInfo.businessType === 'novel' && 
+         (props.basicInfo.host === 'tth5' || props.basicInfo.host === 'ksh5')
 })
 
 const extraBaseConfigLabel = computed(() => {
-  if (props.basicInfo.host === 'tth5') return 'TT端基础配置'
-  if (props.basicInfo.host === 'ksh5') return 'KS端基础配置'
+  if (props.basicInfo.host === 'tth5') return '抖音小程序端基础配置（仅需cl标识）'
+  if (props.basicInfo.host === 'ksh5') return '快手小程序端基础配置（仅需appid标识）'
   return '额外基础配置'
 })
+
+const getHostName = function (host) {
+  const {getHostDisplayName} = useConfig()
+  return getHostDisplayName(host)
+}
+
 </script>
 
 <style scoped>
@@ -215,9 +240,9 @@ const extraBaseConfigLabel = computed(() => {
     flex-direction: column;
     gap: 0;
   }
-  
+
   .form-row .el-form-item {
     margin-bottom: 18px;
   }
 }
-</style> 
+</style>

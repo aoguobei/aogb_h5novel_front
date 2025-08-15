@@ -38,17 +38,17 @@
       <el-form-item label="公司名称" required>
         <el-input v-model="commonConfig.protocol_company" />
       </el-form-item>
-      <el-form-item label="用户协议">
+      <el-form-item v-if="basicInfo.businessType !== 'novel'" label="用户协议">
         <el-input v-model="commonConfig.protocol_about" type="textarea" :rows="3" />
       </el-form-item>
-      <el-form-item label="隐私协议">
+      <el-form-item v-if="basicInfo.businessType !== 'novel'" label="隐私协议">
         <el-input v-model="commonConfig.protocol_privacy" type="textarea" :rows="3" />
       </el-form-item>
-      <el-form-item label="付费协议">
+      <el-form-item v-if="basicInfo.businessType !== 'novel'" label="付费协议">
         <el-input v-model="commonConfig.protocol_vod" type="textarea" :rows="3" />
       </el-form-item>
-      <el-form-item label="用户取消协议">
-        <el-input v-model="commonConfig.protocol_user_cancel" type="textarea" :rows="3" />
+      <el-form-item v-if="basicInfo.businessType !== 'novel'" label="用户取消协议">
+        <el-input v-model="commonConfig.protocol_user_cancel" type="textarea" :rows="3" @input="validateScriptBase"/>
       </el-form-item>
 
       <div class="section-title">
@@ -61,21 +61,56 @@
         <el-input v-model="commonConfig.contact_url" type="textarea" />
       </el-form-item>
       <el-form-item label="部署目录url" required>
-        <el-input v-model="commonConfig.script_base" placeholder="/tt/xingchen/" />
+        <el-input 
+          v-model="commonConfig.script_base" 
+          placeholder="/tt/xingchen/" 
+          @input="validateScriptBase"
+        />
+        <div v-if="scriptBaseError" class="error-tip">
+          <el-icon><Warning /></el-icon>
+          <span>{{ scriptBaseError }}</span>
+        </div>
       </el-form-item>
     </el-form>
   </div>
 </template>
 
 <script setup>
-import { Connection, Document, Link } from '@element-plus/icons-vue'
+import { ref } from 'vue'
+import { Connection, Document, Link, Warning } from '@element-plus/icons-vue'
 
 defineProps({
   commonConfig: {
     type: Object,
     required: true
+  },
+  basicInfo: {
+    type: Object,
+    required: true
   }
 })
+
+const scriptBaseError = ref('')
+
+const validateScriptBase = (value) => {
+  if (!value) {
+    scriptBaseError.value = '请输入部署目录url'
+    return
+  }
+  
+  if (!value.startsWith('/')) {
+    scriptBaseError.value = '部署目录url必须以/开头'
+    return
+  }
+  
+  if (!value.endsWith('/')) {
+    scriptBaseError.value = '部署目录url必须以/结尾'
+    return
+  }
+  
+  // 验证通过，清除错误提示
+  scriptBaseError.value = ''
+}
 </script>
 
 <style scoped>
@@ -136,6 +171,20 @@ defineProps({
   font-size: 14px;
   font-weight: 500;
   color: #475569;
+}
+
+/* 错误提示样式 */
+.error-tip {
+  display: flex;
+  align-items: center;
+  margin-top: 5px;
+  color: #f56c6c;
+  font-size: 12px;
+}
+
+.error-tip .el-icon {
+  margin-right: 4px;
+  font-size: 14px;
 }
 
 /* Deliver配置行布局 */

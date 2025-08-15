@@ -34,8 +34,10 @@
 
         <!-- 步骤3: 通用配置 -->
         <CommonConfigStep
+          ref="commonConfigStepRef"
           v-if="currentStep === 2"
           :common-config="commonConfig"
+          :basic-info="basicInfo"
         />
 
         <!-- 步骤4: 支付配置 -->
@@ -111,9 +113,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { 
+import {
   ArrowLeft,
   ArrowRight,
   VideoPlay
@@ -130,6 +132,7 @@ import { useRouter } from 'vue-router'
 import { brandApi } from '@/api/brand'
 import { websiteApi } from '@/api/website'
 import { validateColor, handleColorInput, generateTTUrl, updateProgress, resetProgress } from '@/composables/useCreateWebsite'
+import websocketManager from '@/utils/websocket'
 
 const router = useRouter()
 
@@ -151,6 +154,10 @@ const progressPercentage = ref(0)
 const progressStatus = ref('')
 const progressText = ref('准备创建...')
 const progressDetails = ref([])
+const currentTaskId = ref('')
+
+// 步骤组件引用
+const commonConfigStepRef = ref(null)
 
 // 数据
 const brands = ref([])
@@ -158,7 +165,8 @@ const brands = ref([])
 // 表单数据
 const basicInfo = ref({
   brandId: null,
-  host: ''
+  host: '',
+  businessType: 'novel'
 })
 
 const baseConfig = ref({
@@ -231,12 +239,13 @@ const onColorInput = (field, value) => {
 
 // 计算属性
 const needsExtraBaseConfig = computed(() => {
-  return basicInfo.value.host === 'tth5' || basicInfo.value.host === 'ksh5'
+  return basicInfo.value.businessType === 'novel' && 
+         (basicInfo.value.host === 'tth5' || basicInfo.value.host === 'ksh5')
 })
 
 const extraBaseConfigLabel = computed(() => {
-  if (basicInfo.value.host === 'tth5') return 'TT端基础配置'
-  if (basicInfo.value.host === 'ksh5') return 'KS端基础配置'
+  if (basicInfo.value.host === 'tth5') return '抖音小程序端基础配置'
+  if (basicInfo.value.host === 'ksh5') return '快手小程序端基础配置'
   return '额外基础配置'
 })
 
@@ -282,26 +291,45 @@ const canProceed = computed(() => {
              basicInfo.value.host &&
              isCurrentHostAvailable.value
     case 1:
-      return baseConfig.value.app_name &&
-             baseConfig.value.platform &&
-             baseConfig.value.app_code &&
-             baseConfig.value.product &&
-             baseConfig.value.customer &&
-             baseConfig.value.appid &&
-             baseConfig.value.version &&
-             baseConfig.value.cl &&
-             (!needsExtraBaseConfig.value || (
-               extraBaseConfig.value.app_name &&
-               extraBaseConfig.value.platform &&
-               extraBaseConfig.value.app_code &&
-               extraBaseConfig.value.product &&
-               extraBaseConfig.value.customer &&
-               extraBaseConfig.value.appid &&
-               extraBaseConfig.value.version &&
-               extraBaseConfig.value.cl
-             ))
+      // 基础配置验证：只验证主配置的必要字段
+      const baseConfigValid = baseConfig.value.app_name &&
+                             baseConfig.value.platform &&
+                             baseConfig.value.app_code &&
+                             baseConfig.value.product &&
+                             baseConfig.value.customer &&
+                             baseConfig.value.appid &&
+                             baseConfig.value.version &&
+                             baseConfig.value.cl
+      
+      // 如果需要额外配置，验证必要的字段
+      if (needsExtraBaseConfig.value) {
+        if (basicInfo.value.host === 'tth5') {
+          // 抖音端只需要cl字段
+          return baseConfigValid && extraBaseConfig.value.cl
+        } else if (basicInfo.value.host === 'ksh5') {
+          // 快手端只需要appid字段
+          return baseConfigValid && extraBaseConfig.value.appid
+        } else {
+          // 其他端需要所有字段
+          return baseConfigValid &&
+                 extraBaseConfig.value.app_name &&
+                 extraBaseConfig.value.platform &&
+                 extraBaseConfig.value.app_code &&
+                 extraBaseConfig.value.product &&
+                 extraBaseConfig.value.customer &&
+                 extraBaseConfig.value.appid &&
+                 extraBaseConfig.value.version &&
+                 extraBaseConfig.value.cl
+        }
+      }
+      
+      return baseConfigValid
     case 2:
-      return commonConfig.value.script_base &&
+      // 验证script_base格式：必须以/开头和结尾
+      const scriptBaseValid = commonConfig.value.script_base && 
+                             /^\/.*\/$/.test(commonConfig.value.script_base)
+      
+      return scriptBaseValid &&
              commonConfig.value.protocol_company &&
              commonConfig.value.contact_url
     case 3:
@@ -408,6 +436,9 @@ const createWebsite = async () => {
   isCreating.value = true
   resetProgressState()
 
+  // 跳转到进度条步骤
+  currentStep.value = 6
+
   try {
     // 构建请求数据
     const requestData = {
@@ -431,85 +462,143 @@ const createWebsite = async () => {
       requestData.novel_config = novelConfig.value
     }
 
-    // 模拟进度更新
-    updateProgressState(10, '', '验证数据...', { status: 'loading', message: '验证表单数据...' })
-    await new Promise(resolve => setTimeout(resolve, 300))
-    updateProgressState(20, '', '验证数据...', { status: 'success', message: '数据验证通过' })
-
-    updateProgressState(30, '', '创建Client...', { status: 'loading', message: '创建Client...' })
-    await new Promise(resolve => setTimeout(resolve, 400))
-    updateProgressState(40, '', '创建Client...', { status: 'success', message: 'Client创建成功' })
-
-    updateProgressState(45, '', '创建BaseConfig...', { status: 'loading', message: '创建BaseConfig...' })
-    await new Promise(resolve => setTimeout(resolve, 500))
-    updateProgressState(50, '', '创建BaseConfig...', { status: 'success', message: 'BaseConfig创建成功' })
-
-    // 如果需要额外的BaseConfig
-    if (needsExtraBaseConfig.value) {
-      updateProgressState(52, '', '创建额外BaseConfig...', { status: 'loading', message: '创建额外BaseConfig...' })
-      await new Promise(resolve => setTimeout(resolve, 400))
-      updateProgressState(54, '', '创建额外BaseConfig...', { status: 'success', message: '额外BaseConfig创建成功' })
-    }
-
-    updateProgressState(needsExtraBaseConfig.value ? 55 : 60, '', '创建支付配置...', { status: 'loading', message: '创建PayConfig...' })
-    await new Promise(resolve => setTimeout(resolve, 300))
-    updateProgressState(needsExtraBaseConfig.value ? 55 : 60, '', '创建支付配置...', { status: 'success', message: 'PayConfig创建成功' })
-
-    // 创建UIConfig
-    updateProgressState(needsExtraBaseConfig.value ? 57 : 65, '', '创建UI配置...', { status: 'loading', message: '创建UIConfig...' })
-    await new Promise(resolve => setTimeout(resolve, 600))
-    updateProgressState(needsExtraBaseConfig.value ? 60 : 70, '', '创建UI配置...', { status: 'success', message: 'UIConfig创建成功' })
-
-    // 创建小说特有配置（tth5端是必填的）
-    if (basicInfo.value.host === 'tth5') {
-      updateProgressState(needsExtraBaseConfig.value ? 62 : 72, '', '创建小说特有配置...', { status: 'loading', message: '创建小说特有配置...' })
-      await new Promise(resolve => setTimeout(resolve, 400))
-      updateProgressState(needsExtraBaseConfig.value ? 64 : 74, '', '创建小说特有配置...', { status: 'success', message: '小说特有配置创建成功' })
-    }
-
-    // 调用批量创建接口
-    const hasNovelConfig = basicInfo.value.host === 'tth5'
-    updateProgressState(needsExtraBaseConfig.value ? (hasNovelConfig ? 70 : 68) : (hasNovelConfig ? 80 : 78), '', '提交到后端...', { status: 'loading', message: '调用后端API...' })
+    // 调用后端API创建任务
     console.log('Sending request to backend:', requestData)
     const response = await websiteApi.createWebsite(requestData)
     console.log('Backend response:', response.data)
-    updateProgressState(needsExtraBaseConfig.value ? (hasNovelConfig ? 75 : 73) : (hasNovelConfig ? 85 : 83), '', '更新项目配置...', { status: 'success', message: '后端API调用成功' })
 
-    // 模拟项目配置文件更新进度
-    updateProgressState(needsExtraBaseConfig.value ? (hasNovelConfig ? 77 : 75) : (hasNovelConfig ? 87 : 85), '', '更新项目配置...', { status: 'loading', message: '更新 _host.js 文件...' })
-    await new Promise(resolve => setTimeout(resolve, 300))
-    updateProgressState(needsExtraBaseConfig.value ? (hasNovelConfig ? 79 : 77) : (hasNovelConfig ? 89 : 87), '', '更新项目配置...', { status: 'success', message: '_host.js 文件更新成功' })
+    // 获取任务ID
+    const responseData = response.data.data || response.data
+    if (!responseData?.task_id) {
+      throw new Error('未获取到任务ID')
+    }
 
-    updateProgressState(needsExtraBaseConfig.value ? (hasNovelConfig ? 81 : 79) : (hasNovelConfig ? 91 : 89), '', '更新项目配置...', { status: 'loading', message: '更新 index.js 文件...' })
-    await new Promise(resolve => setTimeout(resolve, 300))
-    updateProgressState(needsExtraBaseConfig.value ? (hasNovelConfig ? 83 : 81) : (hasNovelConfig ? 93 : 91), '', '更新项目配置...', { status: 'success', message: 'index.js 文件更新成功' })
+    currentTaskId.value = responseData.task_id
+    console.log('Task ID:', currentTaskId.value)
 
-    updateProgressState(needsExtraBaseConfig.value ? (hasNovelConfig ? 85 : 83) : (hasNovelConfig ? 95 : 93), '', '更新项目配置...', { status: 'loading', message: '更新 vite.config.js 文件...' })
-    await new Promise(resolve => setTimeout(resolve, 300))
-    updateProgressState(needsExtraBaseConfig.value ? (hasNovelConfig ? 87 : 85) : (hasNovelConfig ? 97 : 95), '', '更新项目配置...', { status: 'success', message: 'vite.config.js 文件更新成功' })
+    // 连接到WebSocket
+    websocketManager.connect(
+      currentTaskId.value,
+      // onMessage
+      (data) => {
+        console.log('WebSocket message received:', data)
 
-    updateProgressState(needsExtraBaseConfig.value ? (hasNovelConfig ? 89 : 87) : (hasNovelConfig ? 99 : 97), '', '更新项目配置...', { status: 'loading', message: '更新 package.json 文件...' })
-    await new Promise(resolve => setTimeout(resolve, 300))
-    updateProgressState(100, 'success', '网站创建完成！', { status: 'success', message: 'package.json 文件更新成功，所有配置完成' })
+        if (data.type === 'progress') {
+          console.log('收到进度消息:', data.data)
+          const progressData = data.data
+          progressPercentage.value = progressData.percentage
+          // 将后端的 status 映射为 Element Plus 支持的值
+          if (progressData.status === 'running') {
+            progressStatus.value = '' // 运行状态使用空字符串
+          } else {
+            progressStatus.value = progressData.status
+          }
+          progressText.value = progressData.text
 
-    ElMessage.success('网站创建成功！')
+          // 将text和detail合并为一条消息
+          if (progressData.text && progressData.details && progressData.details.length > 0) {
+            const detail = progressData.details[0]
+            progressDetails.value.push({
+              status: detail.status || 'success',
+              text: progressData.text,
+              detail: detail.message,
+              isText: true
+            })
+          } else if (progressData.text) {
+            // 处理只有text的情况，比如回滚完成消息
+            progressDetails.value.push({
+              status: 'success',
+              text: progressData.text,
+              detail: '',
+              isText: true
+            })
+          } else if (progressData.details && progressData.details.length > 0) {
+            progressDetails.value.push(...progressData.details)
+          }
 
-    // 延迟跳转，让用户看到完成状态
-    setTimeout(() => {
-      // 适配新的后端返回结构
-      const responseData = response.data.data || response.data
-      if (responseData?.client_id) {
-        router.push(`/website-config/${responseData.client_id}`)
-      } else {
-        router.push('/website-configs')
+          // 特殊处理：如果是回滚相关的消息，确保显示
+          if (progressData.text && (progressData.text.includes('回滚') || progressData.text.includes('Rollback'))) {
+            console.log('检测到回滚相关消息:', progressData.text)
+          }
+        } else if (data.type === 'task_status') {
+          console.log('收到任务状态消息:', data.data)
+          // 处理任务状态更新
+          const taskData = data.data
+          if (taskData.status === 'failed') {
+            // 任务失败，显示错误信息
+            progressPercentage.value = 0
+            progressStatus.value = 'exception'
+            progressText.value = '任务执行失败'
+            progressDetails.value.push({
+              status: 'error',
+              message: taskData.error || taskData.message || '未知错误'
+            })
+          } else if (taskData.status === 'completed') {
+            // 任务完成
+            progressPercentage.value = 100
+            progressStatus.value = 'success'
+            progressText.value = '任务完成'
+
+            // 添加完成消息到details
+            progressDetails.value.push({
+              status: 'success',
+              message: '任务完成'
+            })
+
+            // 延迟跳转
+            setTimeout(() => {
+              if (taskData.client_id) {
+                router.push(`/website-config/${taskData.client_id}`)
+              } else {
+                router.push('/website-configs')
+              }
+            }, 3000)
+          } else if (taskData.status === 'running') {
+            // 任务运行中
+            progressPercentage.value = taskData.progress || 0
+            progressStatus.value = 'success' // 使用空字符串表示运行状态
+            progressText.value = taskData.message || '正在处理...'
+
+            // 添加运行消息到details
+            if (taskData.message) {
+              progressDetails.value.push({
+                status: 'success',
+                message: taskData.message
+              })
+            }
+          }
+        } else if (data.type === 'result') {
+          // 任务完成，收到最终结果
+          console.log('Task completed with result:', data.data)
+
+          // 延迟跳转
+          // setTimeout(() => {
+          //   if (data.data?.client_id) {
+          //     router.push(`/website-config/${data.data.client_id}`)
+          //   } else {
+          //     router.push('/website-configs')
+          //   }
+          // }, 2000)
+        } else {
+          console.log('收到未知类型的消息:', data.type)
+        }
+      },
+      // onError
+      (error) => {
+        console.error('WebSocket error:', error)
+        ElMessage.error('WebSocket连接失败')
+      },
+      // onClose
+      (event) => {
+        console.log('WebSocket closed:', event)
       }
-    }, 2000)
+    )
+
+    ElMessage.success('任务已创建，正在处理...')
 
   } catch (error) {
-    updateProgressState(0, 'exception', '创建失败', { status: 'error', message: '创建失败: ' + (error.response?.data?.error || error.message) })
-    ElMessage.error('创建失败: ' + (error.response?.data?.error || error.message))
     console.error('Create website error:', error)
-  } finally {
+    ElMessage.error('创建失败: ' + (error.response?.data?.error || error.message))
     isCreating.value = false
   }
 }
@@ -553,21 +642,23 @@ watch(() => basicInfo.value.brandId, (newBrandId) => {
 
 // 监听host变化，重置额外的baseConfig
 watch(() => baseConfig.value, (conf) => {
-  const sameChangeKeyArr = [ 'app_name', 'platform', 'product', 'uc' ]
+  const sameChangeKeyArr = [ 'app_name', 'product' ]
   sameChangeKeyArr.forEach( item => {
     if (conf[item]) extraBaseConfig.value[item] = conf[item]
   })
-  conf['cl'] = conf['app_code']
-  if (conf['app_code']) {
-    extraBaseConfig.value['app_code'] = conf['app_code'].replace('_h5_', '_miniapp_')
-    extraBaseConfig.value['cl'] = extraBaseConfig.value['app_code']
-  }
 }, {
   deep: true
 })
 
 onMounted(() => {
   fetchBrands()
+})
+
+// 组件卸载时清理WebSocket连接
+onUnmounted(() => {
+  if (currentTaskId.value) {
+    websocketManager.disconnect(currentTaskId.value)
+  }
 })
 </script>
 
@@ -711,26 +802,26 @@ onMounted(() => {
     padding: 10px;
   }
 
-  
+
 
   .form-row {
     flex-direction: column;
     gap: 0;
   }
-  
+
   .form-row .el-form-item {
     margin-bottom: 18px;
   }
-  
+
   .deliver-config-row {
     flex-direction: column;
     gap: 0;
   }
-  
+
   .deliver-config-row .el-form-item {
     margin-bottom: 18px;
   }
-  
+
   .deliver-config-row .el-form-item:first-child {
     min-width: auto;
   }
@@ -739,12 +830,12 @@ onMounted(() => {
     flex-direction: column;
     gap: 10px;
   }
-  
+
   .url-input-container {
     flex-direction: column;
     gap: 10px;
   }
-  
+
   .generate-btn {
     min-width: auto;
     width: 100%;
