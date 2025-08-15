@@ -4,7 +4,7 @@
       <h2>第一步：选择品牌和端类型</h2>
       <p class="step-description">请选择要创建网站的品牌和对应的端类型</p>
     </div>
-    
+
     <el-form :model="basicInfo" label-width="120px">
       <el-form-item label="品牌" required>
         <el-select v-model="basicInfo.brandId" placeholder="选择品牌" @change="onBrandChange">
@@ -47,7 +47,7 @@
         <el-radio-group v-model="basicInfo.businessType" :disabled="!basicInfo.brandId">
           <el-radio value="novel">小说</el-radio>
           <el-radio value="video">影视</el-radio>
-          <el-radio value="tool">工具</el-radio>
+          <el-radio value="tool">其它</el-radio>
         </el-radio-group>
         <div v-if="!basicInfo.brandId" class="form-tip">
           请先选择品牌
@@ -170,4 +170,4 @@ const createBrand = async () => {
   justify-content: flex-end;
   gap: 10px;
 }
-</style> 
+</style>

@@ -50,6 +50,7 @@
         <UIConfigStep
           v-if="currentStep === 4"
           :ui-config="uiConfig"
+          :basic-info="basicInfo"
           @color-input="onColorInput"
         />
 
@@ -239,7 +240,7 @@ const onColorInput = (field, value) => {
 
 // 计算属性
 const needsExtraBaseConfig = computed(() => {
-  return basicInfo.value.businessType === 'novel' && 
+  return basicInfo.value.businessType === 'novel' &&
          (basicInfo.value.host === 'tth5' || basicInfo.value.host === 'ksh5')
 })
 
@@ -300,7 +301,7 @@ const canProceed = computed(() => {
                              baseConfig.value.appid &&
                              baseConfig.value.version &&
                              baseConfig.value.cl
-      
+
       // 如果需要额外配置，验证必要的字段
       if (needsExtraBaseConfig.value) {
         if (basicInfo.value.host === 'tth5') {
@@ -322,13 +323,13 @@ const canProceed = computed(() => {
                  extraBaseConfig.value.cl
         }
       }
-      
+
       return baseConfigValid
     case 2:
       // 验证script_base格式：必须以/开头和结尾
-      const scriptBaseValid = commonConfig.value.script_base && 
+      const scriptBaseValid = commonConfig.value.script_base &&
                              /^\/.*\/$/.test(commonConfig.value.script_base)
-      
+
       return scriptBaseValid &&
              commonConfig.value.protocol_company &&
              commonConfig.value.contact_url
@@ -572,13 +573,13 @@ const createWebsite = async () => {
           console.log('Task completed with result:', data.data)
 
           // 延迟跳转
-          // setTimeout(() => {
-          //   if (data.data?.client_id) {
-          //     router.push(`/website-config/${data.data.client_id}`)
-          //   } else {
-          //     router.push('/website-configs')
-          //   }
-          // }, 2000)
+          setTimeout(() => {
+            if (data.data?.client_id) {
+              router.push(`/website-config/${data.data.client_id}`)
+            } else {
+              router.push('/website-configs')
+            }
+          }, 3000)
         } else {
           console.log('收到未知类型的消息:', data.type)
         }
