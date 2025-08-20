@@ -281,10 +281,6 @@
     </div>
 
     <div class="confirm-actions">
-      <el-button @click="$emit('prev-step')" class="action-btn prev-btn">
-        <el-icon><ArrowLeft /></el-icon>
-        返回修改
-      </el-button>
       <el-button type="primary" @click="$emit('confirm-config')" class="action-btn confirm-btn">
         <el-icon><Check /></el-icon>
         确认配置
@@ -349,7 +345,7 @@ const props = defineProps({
   }
 })
 
-defineEmits(['prev-step', 'confirm-config'])
+defineEmits(['confirm-config'])
 
 // 获取端类型标签
 const getHostLabel = (host) => {
@@ -374,7 +370,7 @@ const getBusinessTypeLabel = (businessType) => {
 
 <style scoped>
 .config-confirm-step {
-  padding: 20px 0;
+  padding: 20px 0 0;
 }
 
 .confirm-header {
@@ -474,8 +470,8 @@ const getBusinessTypeLabel = (businessType) => {
 
 .confirm-actions {
   display: flex;
-  justify-content: space-between;
-  margin-top: 30px;
+  justify-content: center;
+  //margin-top: 30px;
   padding-top: 20px;
   border-top: 1px solid #ebeef5;
 }

@@ -636,8 +636,6 @@ onMounted(() => {
   bottom: 0;
   border-radius: 16px;
   padding: 2px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask-composite: exclude;
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -645,6 +643,7 @@ onMounted(() => {
 
 .config-card:hover {
   transform: translateY(-4px);
+  border: 2px solid #764ba2;
   box-shadow: 0 12px 40px rgba(102, 126, 234, 0.15);
 }
 
@@ -735,8 +734,6 @@ onMounted(() => {
   bottom: 0;
   border-radius: 4px;
   padding: 2px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
   mask-composite: exclude;
   opacity: 0;
   transition: opacity 0.3s ease;

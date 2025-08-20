@@ -31,8 +31,9 @@
               :key="brand.id"
               class="brand-item"
               :class="{ active: selectedBrandId === brand.id }"
+              @click="selectBrand(brand)"
             >
-              <div class="brand-content" @click="selectBrand(brand)">
+              <div class="brand-content">
                 <div class="brand-info">
                   <div class="brand-code">{{ brand.code }}</div>
                   <div class="brand-meta">
@@ -188,6 +189,7 @@ const handleDeleteBrand = async (brand) => {
 
 // 刷新网站数据
 const refreshWebsites = async () => {
+  await fetchBrands()
   await fetchWebsites(true)
 }
 
@@ -260,6 +262,7 @@ onMounted(async () => {
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
+  cursor: pointer;
 }
 
 .brand-content {
@@ -267,7 +270,6 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   gap: 16px;
-  cursor: pointer;
 }
 
 .brand-item::before {
