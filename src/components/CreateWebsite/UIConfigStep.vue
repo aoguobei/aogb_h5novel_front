@@ -1,7 +1,7 @@
 <template>
   <div class="step-content">
     <div class="step-header">
-      <h2>第五步：UI配置</h2>
+      <div class="step-title">第五步：UI配置</div>
       <p class="step-description">配置网站的主题色彩和视觉风格</p>
     </div>
 
@@ -41,7 +41,7 @@
 
       <!-- 右侧预览组件 -->
       <div v-if="basicInfo?.businessType === 'novel'" class="preview-section">
-        <novel-business-6 
+        <novel-business-6
           :theme-config="uiConfig"
           :business-config="businessConfig"
           @color-change="handleComponentColorChange"
@@ -106,14 +106,15 @@ const handleComponentConfigUpdate = (configUpdate) => {
   border-bottom: 1px solid #ebeef5;
 }
 
-.step-header h2 {
+.step-title {
   margin: 0 0 8px 0;
-  color: #409eff;
-  font-size: 20px;
+  color: #2c3e50;
+  font-size: 22px;
+  font-weight: 600;
 }
 
 .step-description {
-  font-size: 14px;
+  font-size: 16px;
   color: #909399;
   margin-bottom: 15px;
   padding: 8px 12px;
@@ -144,9 +145,9 @@ const handleComponentConfigUpdate = (configUpdate) => {
     flex-direction: column;
     gap: 20px;
   }
-  
+
   .color-config-section {
     min-width: auto;
   }
 }
-</style> 
+</style>

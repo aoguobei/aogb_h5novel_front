@@ -1,7 +1,7 @@
 <template>
   <div class="step-content">
     <div class="step-header">
-      <h2>第二步：基础配置</h2>
+      <div class="step-title">第二步：基础配置</div>
       <p class="step-description">配置网站的基本信息和参数</p>
     </div>
 
@@ -145,7 +145,7 @@ const props = defineProps({
 })
 
 const needsExtraBaseConfig = computed(() => {
-  return props.basicInfo.businessType === 'novel' && 
+  return props.basicInfo.businessType === 'novel' &&
          (props.basicInfo.host === 'tth5' || props.basicInfo.host === 'ksh5')
 })
 
@@ -174,14 +174,15 @@ const getHostName = function (host) {
   border-bottom: 1px solid #ebeef5;
 }
 
-.step-header h2 {
+.step-title {
   margin: 0 0 8px 0;
-  color: #409eff;
-  font-size: 20px;
+  color: #2c3e50;
+  font-size: 22px;
+  font-weight: 600;
 }
 
 .step-description {
-  font-size: 14px;
+  font-size: 16px;
   color: #909399;
   margin-bottom: 15px;
   padding: 8px 12px;
@@ -212,12 +213,12 @@ const getHostName = function (host) {
 
 .section-title-icon .el-icon {
   color: white;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: bold;
 }
 
 .section-title span {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   color: #475569;
 }

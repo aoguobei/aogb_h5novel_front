@@ -28,40 +28,42 @@
       </div>
     </template>
 
-    <div class="card-content" v-show="website.expanded">
-      <div class="content-row">
-        <div class="time-info">
-          <span class="time-label">创建时间:</span>
-          <span class="time-value">{{ formatDate(website.client.created_at) }}</span>
+    <template v-if="website.expanded">
+      <div class="card-content">
+        <div class="content-row">
+          <div class="time-info">
+            <span class="time-label">创建时间:</span>
+            <span class="time-value">{{ formatDate(website.client.created_at) }}</span>
+          </div>
+          <div class="time-info">
+            <span class="time-label">更新时间:</span>
+            <span class="time-value">{{ formatDate(website.client.updated_at) }}</span>
+          </div>
         </div>
-        <div class="time-info">
-          <span class="time-label">更新时间:</span>
-          <span class="time-value">{{ formatDate(website.client.updated_at) }}</span>
-        </div>
-      </div>
 
-      <!-- 基础配置信息 -->
-      <div v-if="hasBaseConfig(website)" class="config-info-section">
-        <div class="config-row">
-          <div class="config-item">
-            <span class="config-label">cl:</span>
-            <span class="config-value">{{ website.base_config.cl || '-' }}</span>
-          </div>
-          <div class="config-item">
-            <span class="config-label">customer:</span>
-            <span class="config-value">{{ website.base_config.customer || '-' }}</span>
-          </div>
-          <div class="config-item">
-            <span class="config-label">product:</span>
-            <span class="config-value">{{ website.base_config.product || '-' }}</span>
-          </div>
-          <div class="config-item">
-            <span class="config-label">版本:</span>
-            <span class="config-value">{{ website.base_config.version || '-' }}</span>
+        <!-- 基础配置信息 -->
+        <div v-if="hasBaseConfig(website)" class="config-info-section">
+          <div class="config-row">
+            <div class="config-item">
+              <span class="config-label">cl:</span>
+              <span class="config-value">{{ website.base_config.cl || '-' }}</span>
+            </div>
+            <div class="config-item">
+              <span class="config-label">customer:</span>
+              <span class="config-value">{{ website.base_config.customer || '-' }}</span>
+            </div>
+            <div class="config-item">
+              <span class="config-label">product:</span>
+              <span class="config-value">{{ website.base_config.product || '-' }}</span>
+            </div>
+            <div class="config-item">
+              <span class="config-label">版本:</span>
+              <span class="config-value">{{ website.base_config.version || '-' }}</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </template>
   </el-card>
 </template>
 
@@ -114,20 +116,33 @@ defineEmits(['toggle', 'view', 'viewExtra'])
 
 <style scoped>
 .website-card {
-  transition: all 0.3s ease;
-  font-size: 13px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  font-size: 15px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .website-card:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+  border-color: #cbd5e1;
 }
 
 .website-card :deep(.el-card__header) {
-  padding: 8px 12px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .website-card :deep(.el-card__body) {
-  padding: 0px 12px;
+  padding: 0;
+  background: #ffffff;
+}
+
+.website-card :deep(.el-card__body:empty) {
+  padding: 0;
+  display: none;
 }
 
 .card-header {
@@ -143,13 +158,21 @@ defineEmits(['toggle', 'view', 'viewExtra'])
 }
 
 .website-info .website-name {
-  font-weight: bold;
-  min-width: 80px;;
+  font-weight: 700;
+  min-width: 80px;
+  font-size: 17px;
+  color: #1e293b;
+  letter-spacing: -0.025em;
 }
 
 .brand-code {
-  color: #909399;
-  font-size: 12px;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 500;
+  background: #f1f5f9;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
 }
 
 .card-actions {
@@ -157,40 +180,52 @@ defineEmits(['toggle', 'view', 'viewExtra'])
 }
 
 .card-content {
-  padding: 10px 0px;
+  padding: 20px;
 }
 
 .content-row {
   display: flex;
-  gap: 20px;
-  margin-bottom: 12px;
+  gap: 24px;
+  margin-bottom: 16px;
 }
 
 .time-info {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 13px;
+  gap: 8px;
 }
 
 .time-label {
-  color: #909399;
-  font-weight: 500;
+  color: #475569;
+  font-size: 12px;
 }
 
 .time-value {
-  color: #606266;
+  color: #1e293b;
+  font-size: 14px;
 }
 
 .config-info-section {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #ebeef5;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 2px solid #e2e8f0;
+  position: relative;
+}
+
+.config-info-section::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: 0;
+  width: 40px;
+  height: 2px;
+  //background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+  border-radius: 1px;
 }
 
 .config-row {
   display: flex;
-  gap: 20px;
+  gap: 16px;
   flex-wrap: wrap;
 }
 
@@ -198,26 +233,27 @@ defineEmits(['toggle', 'view', 'viewExtra'])
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: 15px;
+  transition: all 0.2s ease;
 }
 
 .config-label {
-  color: #606266;
+  color: #475569;
   font-weight: 500;
   white-space: nowrap;
+  font-size: 14px;
 }
 
 .config-value {
-  background: #f0f9ff;
-  color: #1e40af;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-weight: 600;
-  font-size: 12px;
+  color: #409eff;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 14px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 120px;
-  border: 1px solid #dbeafe;
+  //border: 1px solid #93c5fd;
+  box-shadow: 0 1px 3px #b8d9fb;
 }
-</style> 
+</style>

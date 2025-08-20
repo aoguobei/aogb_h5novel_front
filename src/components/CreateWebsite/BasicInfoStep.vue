@@ -1,7 +1,7 @@
 <template>
   <div class="step-content">
     <div class="step-header">
-      <h2>第一步：选择品牌和端类型</h2>
+      <div class="step-title">第一步：选择品牌和端类型</div>
       <p class="step-description">请选择要创建网站的品牌和对应的端类型</p>
     </div>
 
@@ -11,7 +11,7 @@
           <el-option
             v-for="brand in brands"
             :key="brand.id"
-            :label="brand.code"
+            :label="brand.name || brand.code"
             :value="brand.id"
           />
         </el-select>
@@ -46,8 +46,8 @@
       <el-form-item label="业务类型" required>
         <el-radio-group v-model="basicInfo.businessType" :disabled="!basicInfo.brandId">
           <el-radio value="novel">小说</el-radio>
-          <el-radio value="video">影视</el-radio>
-          <el-radio value="tool">其它</el-radio>
+          <el-radio value="video" disabled>影视</el-radio>
+          <el-radio value="tool" disabled>其它</el-radio>
         </el-radio-group>
         <div v-if="!basicInfo.brandId" class="form-tip">
           请先选择品牌
@@ -57,9 +57,9 @@
 
     <!-- 创建品牌对话框 -->
     <el-dialog v-model="showCreateBrandDialog" title="创建新品牌" width="400px" class="brand-dialog">
-      <el-form :model="newBrand" label-width="80px">
+      <el-form :model="newBrand">
         <el-form-item label="品牌代码" required>
-          <el-input v-model="newBrand.code" placeholder="输入品牌代码" />
+          <el-input v-model="newBrand.code" placeholder="输入brand" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -135,14 +135,15 @@ const createBrand = async () => {
   border-bottom: 1px solid #ebeef5;
 }
 
-.step-header h2 {
+.step-title {
   margin: 0 0 8px 0;
-  color: #409eff;
-  font-size: 20px;
+  color: #2c3e50;
+  font-size: 22px;
+  font-weight: 600;
 }
 
 .step-description {
-  font-size: 14px;
+  font-size: 16px;
   color: #909399;
   margin-bottom: 15px;
   padding: 8px 12px;
@@ -152,7 +153,7 @@ const createBrand = async () => {
 }
 
 .form-tip {
-  font-size: 12px;
+  font-size: 14px;
   color: #909399;
   margin-top: 5px;
 }
@@ -169,5 +170,11 @@ const createBrand = async () => {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+}
+
+/* 全局字体大小优化 */
+:deep(.el-dialog__title) {
+  font-size: 18px !important;
+  font-weight: 600;
 }
 </style>

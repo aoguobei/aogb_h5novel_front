@@ -103,14 +103,14 @@ defineProps({
 }
 
 .step-item .step-number {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
   color: #64748b;
   transition: all 0.3s ease;
 }
 
 .step-item .step-label {
-  font-size: 12px;
+  font-size: 14px;
   color: #64748b;
   text-align: center;
   font-weight: 500;
@@ -148,7 +148,7 @@ defineProps({
 
 .step-item.completed .check-icon {
   color: white;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: bold;
 }
 
@@ -230,11 +230,11 @@ defineProps({
   }
   
   .step-item .step-number {
-    font-size: 16px;
+    font-size: 18px;
   }
   
   .step-item .step-label {
-    font-size: 12px;
+    font-size: 14px;
   }
 }
 </style> 

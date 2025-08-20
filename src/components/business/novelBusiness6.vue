@@ -8,7 +8,7 @@
       
       <!-- 标题区域 -->
       <div class="dialog-content">
-        <h1 class="novel-title">《宁安春若梦》</h1>
+        <div class="novel-title">《宁安春若梦》</div>
         <p class="novel-desc">后续是付费内容，开通会员阅读全站内容</p>
         
         <!-- 解锁说明 -->
@@ -172,12 +172,11 @@ const selectPackage = (index) => {
 
 /* 标题 */
 .novel-title {
-  margin: 0 0 8px 0;
-  font-size: 22px;
-  font-weight: bold;
-  color: var(--text-main);
+  font-size: 24px;
+  font-weight: 700;
+  color: #333;
   text-align: center;
-  line-height: 1.2;
+  margin-bottom: 20px;
 }
 
 .novel-desc {

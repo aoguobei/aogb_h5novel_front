@@ -1,7 +1,7 @@
 <template>
   <div class="step-content">
     <div class="step-header">
-      <h2>第四步：支付配置</h2>
+      <div class="step-title">第四步：支付配置</div>
       <p class="step-description">配置支付相关的网关和参数</p>
     </div>
 
@@ -68,14 +68,15 @@ defineProps({
   border-bottom: 1px solid #ebeef5;
 }
 
-.step-header h2 {
+.step-title {
   margin: 0 0 8px 0;
-  color: #409eff;
-  font-size: 20px;
+  color: #2c3e50;
+  font-size: 22px;
+  font-weight: 600;
 }
 
 .step-description {
-  font-size: 14px;
+  font-size: 16px;
   color: #909399;
   margin-bottom: 15px;
   padding: 8px 12px;
@@ -106,12 +107,12 @@ defineProps({
 
 .section-title-icon .el-icon {
   color: white;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: bold;
 }
 
 .section-title span {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   color: #475569;
 }
@@ -134,9 +135,9 @@ defineProps({
     flex-direction: column;
     gap: 0;
   }
-  
+
   .gateway-row .el-form-item {
     margin-bottom: 18px;
   }
 }
-</style> 
+</style>

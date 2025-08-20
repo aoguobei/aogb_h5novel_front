@@ -1,7 +1,7 @@
 <template>
   <div class="step-content">
     <div class="step-header">
-      <h2>第三步：通用配置</h2>
+      <div class="step-title">第三步：通用配置</div>
       <p class="step-description">配置网站的通用设置和协议信息</p>
     </div>
 
@@ -61,9 +61,9 @@
         <el-input v-model="commonConfig.contact_url" type="textarea" />
       </el-form-item>
       <el-form-item label="部署目录url" required>
-        <el-input 
-          v-model="commonConfig.script_base" 
-          placeholder="/tt/xingchen/" 
+        <el-input
+          v-model="commonConfig.script_base"
+          placeholder="/tt/xingchen/"
           @input="validateScriptBase"
         />
         <div v-if="scriptBaseError" class="error-tip">
@@ -97,17 +97,17 @@ const validateScriptBase = (value) => {
     scriptBaseError.value = '请输入部署目录url'
     return
   }
-  
+
   if (!value.startsWith('/')) {
     scriptBaseError.value = '部署目录url必须以/开头'
     return
   }
-  
+
   if (!value.endsWith('/')) {
     scriptBaseError.value = '部署目录url必须以/结尾'
     return
   }
-  
+
   // 验证通过，清除错误提示
   scriptBaseError.value = ''
 }
@@ -125,14 +125,15 @@ const validateScriptBase = (value) => {
   border-bottom: 1px solid #ebeef5;
 }
 
-.step-header h2 {
+.step-title {
   margin: 0 0 8px 0;
-  color: #409eff;
-  font-size: 20px;
+  color: #2c3e50;
+  font-size: 22px;
+  font-weight: 600;
 }
 
 .step-description {
-  font-size: 14px;
+  font-size: 16px;
   color: #909399;
   margin-bottom: 15px;
   padding: 8px 12px;
@@ -163,12 +164,12 @@ const validateScriptBase = (value) => {
 
 .section-title-icon .el-icon {
   color: white;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: bold;
 }
 
 .section-title span {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 500;
   color: #475569;
 }
@@ -179,7 +180,7 @@ const validateScriptBase = (value) => {
   align-items: center;
   margin-top: 5px;
   color: #f56c6c;
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .error-tip .el-icon {
@@ -211,13 +212,13 @@ const validateScriptBase = (value) => {
     flex-direction: column;
     gap: 0;
   }
-  
+
   .deliver-config-row .el-form-item {
     margin-bottom: 18px;
   }
-  
+
   .deliver-config-row .el-form-item:first-child {
     min-width: auto;
   }
 }
-</style> 
+</style>

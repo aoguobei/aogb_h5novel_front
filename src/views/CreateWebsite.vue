@@ -2,7 +2,7 @@
   <div class="create-mini-app">
     <div class="page-header">
       <div class="page-header-content">
-        <h1 class="page-title">创建网站</h1>
+        <div class="page-title">创建网站</div>
         <p class="page-subtitle">通过简单的步骤配置，快速创建您的网站</p>
       </div>
     </div>
@@ -63,14 +63,34 @@
           @generate-t-t-url="onGenerateTTUrl"
         />
 
-        <!-- 步骤7: 生成文件 -->
-        <ProgressStep
-          v-if="currentStep === 6"
-          :progress-percentage="progressPercentage"
-          :progress-status="progressStatus"
-          :progress-text="progressText"
-          :progress-details="progressDetails"
-        />
+        <!-- 步骤7: 配置确认与生成 -->
+        <div v-if="currentStep === 6">
+          <!-- 配置确认部分 -->
+          <ConfigConfirmStep
+            v-if="!isCreating"
+            :basic-info="basicInfo"
+            :base-config="baseConfig"
+            :extra-base-config="extraBaseConfig"
+            :common-config="commonConfig"
+            :pay-config="payConfig"
+            :ui-config="uiConfig"
+            :novel-config="novelConfig"
+            :brands="brands"
+            :needs-extra-base-config="needsExtraBaseConfig"
+            :extra-base-config-label="extraBaseConfigLabel"
+            @prev-step="prevStep"
+            @confirm-config="onConfirmConfig"
+          />
+
+          <!-- 生成文件部分 -->
+          <ProgressStep
+            v-if="isCreating"
+            :progress-percentage="progressPercentage"
+            :progress-status="progressStatus"
+            :progress-text="progressText"
+            :progress-details="progressDetails"
+          />
+        </div>
       </div>
 
       <!-- 操作按钮 -->
@@ -94,18 +114,6 @@
           下一步
           <el-icon><ArrowRight /></el-icon>
         </el-button>
-
-        <el-button
-          v-if="currentStep === 6"
-          type="success"
-          @click="createWebsite"
-          :loading="isCreating"
-          :disabled="isCreating"
-          class="action-btn create-btn"
-        >
-          <el-icon><VideoPlay /></el-icon>
-          开始创建网站
-        </el-button>
       </div>
     </el-card>
 
@@ -119,7 +127,6 @@ import { ElMessage } from 'element-plus'
 import {
   ArrowLeft,
   ArrowRight,
-  VideoPlay
 } from '@element-plus/icons-vue'
 import StepIndicator from '@/components/CreateWebsite/StepIndicator.vue'
 import BasicInfoStep from '@/components/CreateWebsite/BasicInfoStep.vue'
@@ -128,14 +135,16 @@ import CommonConfigStep from '@/components/CreateWebsite/CommonConfigStep.vue'
 import PayConfigStep from '@/components/CreateWebsite/PayConfigStep.vue'
 import UIConfigStep from '@/components/CreateWebsite/UIConfigStep.vue'
 import NovelConfigStep from '@/components/CreateWebsite/NovelConfigStep.vue'
+import ConfigConfirmStep from '@/components/CreateWebsite/ConfigConfirmStep.vue'
 import ProgressStep from '@/components/CreateWebsite/ProgressStep.vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { brandApi } from '@/api/brand'
 import { websiteApi } from '@/api/website'
 import { validateColor, handleColorInput, generateTTUrl, updateProgress, resetProgress } from '@/composables/useCreateWebsite'
 import websocketManager from '@/utils/websocket'
 
 const router = useRouter()
+const route = useRoute()
 
 // 步骤配置
 const steps = [
@@ -145,7 +154,7 @@ const steps = [
   { title: '支付配置' },
   { title: 'UI配置' },
   { title: '小说特有配置' },
-  { title: '生成文件' }
+  { title: '配置确认与生成' }
 ]
 
 // 步骤控制
@@ -219,8 +228,8 @@ const payConfig = ref({
 })
 
 const uiConfig = ref({
-  theme_bg_main: '#2552f5',
-  theme_bg_second: '#2552f5',
+  theme_bg_main: '#268045',
+  theme_bg_second: '#95acfc',
   theme_text_main: '#000000'
 })
 
@@ -361,6 +370,9 @@ const canProceed = computed(() => {
         return novelConfig.value.tt_jump_home_url && novelConfig.value.tt_login_callback_domain
       }
       return true // 其他端类型不需要小说特有配置
+    case 6:
+      // 配置确认与生成步骤，如果正在创建则不允许返回
+      return !isCreating.value
     default:
       return true
   }
@@ -372,6 +384,20 @@ const fetchBrands = async () => {
     const response = await brandApi.getBrands()
     // 适配新的后端返回结构
     brands.value = response.data.data || response.data || []
+
+    // 在brands加载完成后，检查是否需要预填充品牌信息
+    console.log('检查URL参数:', route.query)
+    if (route.query.brandId && route.query.brandCode) {
+      const brandId = parseInt(route.query.brandId)
+      // 验证品牌是否存在
+      const brandExists = brands.value.some(brand => brand.id === brandId)
+      if (brandExists) {
+        basicInfo.value.brandId = brandId
+        basicInfo.value.brandCode = route.query.brandCode
+      } else {
+        console.warn('指定的品牌不存在:', brandId)
+      }
+    }
   } catch (error) {
     console.error('Failed to fetch brands:', error)
   }
@@ -380,9 +406,7 @@ const fetchBrands = async () => {
 const onBrandChange = () => {
   // 当品牌改变时，可以预填充一些配置
 const selectedBrand = brands.value.find(b => b.id === basicInfo.value.brandId)
-// if (selectedBrand) {
-//   baseConfig.value.app_code = selectedBrand.code
-// }
+basicInfo.value.brandCode = selectedBrand.code
 }
 
 // 当host改变时，重置额外的baseConfig
@@ -436,9 +460,6 @@ const createWebsite = async () => {
 
   isCreating.value = true
   resetProgressState()
-
-  // 跳转到进度条步骤
-  currentStep.value = 6
 
   try {
     // 构建请求数据
@@ -609,6 +630,12 @@ const onGenerateTTUrl = async () => {
   await generateTTUrl(extraBaseConfig.value, novelConfig.value, isGeneratingUrl)
 }
 
+// 配置确认处理
+const onConfirmConfig = () => {
+  // 用户确认配置后，开始创建网站
+  createWebsite()
+}
+
 // 监听host变化，重置额外的baseConfig
 watch(() => basicInfo.value.host, (newHost) => {
   if (newHost && (newHost === 'tth5' || newHost === 'ksh5')) {
@@ -665,6 +692,8 @@ onUnmounted(() => {
 
 <style scoped>
 .create-mini-app {
+  max-width: 1400px ;
+  margin: 0 auto;
   padding: 15px;
 }
 
@@ -683,14 +712,14 @@ onUnmounted(() => {
 .page-title {
   margin: 0;
   color: #303133;
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 600;
 }
 
 .page-subtitle {
   margin: 0;
   color: #909399;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 400;
 }
 
@@ -737,7 +766,7 @@ onUnmounted(() => {
 
 
 .form-tip {
-  font-size: 12px;
+  font-size: 14px;
   color: #909399;
   margin-top: 5px;
   display: flex;
@@ -782,13 +811,43 @@ onUnmounted(() => {
   max-width: 200px;
 }
 
+/* 字体大小优化 */
+:deep(.el-form-item__label) {
+  font-size: 16px !important;
+  font-weight: 500;
+}
+
+:deep(.el-input__inner) {
+  font-size: 16px !important;
+}
+
+:deep(.el-textarea__inner) {
+  font-size: 16px !important;
+}
+
+:deep(.el-select .el-input__inner) {
+  font-size: 16px !important;
+}
+
+:deep(.el-radio__label) {
+  font-size: 16px !important;
+}
+
+:deep(.el-checkbox__label) {
+  font-size: 16px !important;
+}
+
+:deep(.el-button) {
+  font-size: 16px !important;
+}
+
 
 
 
 
 /* 表单提示间距 */
 .form-tip {
-  font-size: 12px;
+  font-size: 14px;
   color: #909399;
   margin-top: 12px;
   display: block;

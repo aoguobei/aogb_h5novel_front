@@ -34,7 +34,7 @@
     <!-- 附加小程序配置 -->
     <div v-if="website.client.host === 'ksh5' && hasKsConfig(website)" class="extra-config">
       <div class="extra-config-header">
-        <h4>快手小程序配置</h4>
+        <div class="config-title">快手小程序配置</div>
         <el-button
           size="small"
           type="primary"
@@ -61,7 +61,7 @@
 
     <div v-if="website.client.host === 'tth5' && hasTtConfig(website)" class="extra-config">
       <div class="extra-config-header">
-        <h4>抖音小程序配置</h4>
+        <div class="config-title">抖音小程序配置</div>
         <el-button
           size="small"
           type="primary"
@@ -182,7 +182,7 @@ defineEmits(['viewExtra'])
   margin-bottom: 10px;
 }
 
-.extra-config-header h4 {
+.config-title {
   margin: 0;
   color: #303133;
   font-size: 15px;

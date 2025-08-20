@@ -8,7 +8,7 @@
             <el-icon size="24"><Shop /></el-icon>
           </div>
           <div class="brand-title">
-            <h3>{{ brand.code }}</h3>
+            <div class="brand-name">{{ brand.code }}</div>
             <p class="brand-subtitle">品牌代码</p>
           </div>
         </div>
@@ -101,7 +101,7 @@ defineEmits(['view',])
   flex: 1;
 }
 
-.brand-title h3 {
+.brand-name {
   margin: 0 0 2px 0;
   color: #303133;
   font-size: 16px;
@@ -170,7 +170,7 @@ defineEmits(['view',])
     height: 40px;
   }
 
-  .brand-title h3 {
+  .brand-name {
     font-size: 16px;
   }
 

@@ -1,15 +1,11 @@
 <template>
-  <div class="brand-clients">
+  <div class="client-list">
     <div class="header">
       <div class="header-left">
-        <el-button @click="$router.push('/')" class="back-btn">
-          <el-icon><ArrowLeft /></el-icon>
-          返回
-        </el-button>
-        <h2>{{ brandName }} - 客户端列表</h2>
+        <div class="header-title">{{ brandName }} — 客户端列表</div>
       </div>
       <div class="header-actions">
-        <el-button type="primary" @click="$router.push('/create-website')">
+        <el-button type="primary" @click="$router.push(`/create-website?brandId=${props.brandId}&brandCode=${props.brandCode}`)">
           <el-icon><Plus /></el-icon>
           新建客户端
         </el-button>
@@ -41,10 +37,10 @@
         <div class="client-header">
           <div class="client-info">
             <div class="client-title">
+              <div class="fwb">{{getAppName(client)}}</div>
               <el-tag :type="getHostTagType(client.host)" size="large">
                 {{ getHostDisplayName(client.host) }}
               </el-tag>
-              <span class="client-id">ID: {{ client.id }}</span>
             </div>
             <div class="client-meta">
               <span class="created-time">创建时间: {{ formatDate(client.created_at) }}</span>
@@ -129,36 +125,49 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { ArrowLeft, Plus, View, Delete } from '@element-plus/icons-vue'
-import { useWebsite } from '@/composables/useWebsite'
+import { ref, computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { Plus, View, Delete } from '@element-plus/icons-vue'
 import { websiteApi } from '@/api/website'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 
-const route = useRoute()
-const router = useRouter()
-const { websites, loading, fetchWebsites } = useWebsite()
+const props = defineProps({
+  brandId: {
+    type: Number,
+    required: true
+  },
+  brandCode: {
+    type: String,
+    required: true
+  },
+  websites: {
+    type: Array,
+    default: () => []
+  },
+  loading: {
+    type: Boolean,
+    default: false
+  }
+})
 
+const emit = defineEmits(['refresh'])
+
+const router = useRouter()
 const error = ref('')
 const deleteDialogVisible = ref(false)
 const clientToDelete = ref(null)
 const deleting = ref(false)
 
-// 从路由参数获取品牌ID
-const brandId = computed(() => parseInt(route.params.brandId))
-
 // 获取品牌名称
 const brandName = computed(() => {
-  const brand = websites.value.find(website => website.client.brand_id === brandId.value)
-  return brand?.client.brand?.code || '未知品牌'
+  return props.brandCode || '未知品牌'
 })
 
 // 获取当前品牌的所有客户端
 const clients = computed(() => {
-  return websites.value
-    .filter(website => website.client.brand_id === brandId.value)
+  return props.websites
+    .filter(website => website.client.brand_id === props.brandId)
     .map(website => website.client)
     .sort((a, b) => {
       // 按创建时间倒序排列（从新到旧）
@@ -178,6 +187,12 @@ const getHostDisplayName = (host) => {
     'ks': '快手小程序'
   }
   return hostMap[host] || host
+}
+
+const getAppName = (client) => {
+  if (client.base_configs?.length > 0) {
+    return client.base_configs[0].app_name
+  }
 }
 
 // 获取主机类型标签颜色
@@ -220,8 +235,8 @@ const deleteClient = async () => {
     deleteDialogVisible.value = false
     clientToDelete.value = null
 
-    // 重新获取数据，包含所有类型的客户端
-    await fetchWebsites(true)
+    // 通知父组件刷新数据
+    emit('refresh')
   } catch (error) {
     ElMessage.error('删除失败: ' + (error.response?.data?.message || error.message))
   } finally {
@@ -229,28 +244,24 @@ const deleteClient = async () => {
   }
 }
 
-onMounted(async () => {
-  try {
-    await fetchWebsites(true) // 传入true，包含所有类型的客户端
-  } catch (err) {
-    error.value = '获取客户端列表失败'
-  }
+// 监听brandId变化，重置错误状态
+watch(() => props.brandId, () => {
+  error.value = ''
 })
 </script>
 
 <style scoped>
-.brand-clients {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
+.client-list {
+  display: flex;
+  flex-direction: column;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 32px;
-  padding: 24px;
+  margin-bottom: 24px;
+  padding: 20px;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
@@ -262,14 +273,9 @@ onMounted(async () => {
   gap: 16px;
 }
 
-.back-btn {
-  margin-right: 16px;
-}
-
-.header h2 {
-  margin: 0;
+.header-title {
   color: #303133;
-  font-size: 24px;
+  font-size: 16px;
   font-weight: 600;
 }
 
@@ -279,9 +285,11 @@ onMounted(async () => {
 }
 
 .clients-container {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 16px;
+  overflow-y: auto;
 }
 
 .client-card {
@@ -310,11 +318,6 @@ onMounted(async () => {
   align-items: center;
   gap: 12px;
   margin-bottom: 8px;
-}
-
-.client-id {
-  color: #909399;
-  font-size: 14px;
 }
 
 .client-meta {

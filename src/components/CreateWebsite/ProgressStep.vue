@@ -1,13 +1,13 @@
 <template>
   <div class="step-content">
     <div class="step-header">
-      <h2>第七步：生成文件</h2>
+      <div class="step-title">第七步：配置确认与生成</div>
       <p class="step-description">正在为您创建网站，请稍候...</p>
     </div>
 
     <div class="progress-section">
       <div class="progress-header">
-        <h3>正在创建网站...</h3>
+        <div class="progress-title">正在创建网站...</div>
         <p>请耐心等待，系统正在为您生成网站文件</p>
       </div>
 
@@ -72,10 +72,11 @@ defineProps({
   border-bottom: 1px solid #ebeef5;
 }
 
-.step-header h2 {
+.step-title {
   margin: 0 0 8px 0;
-  color: #409eff;
-  font-size: 20px;
+  color: #2c3e50;
+  font-size: 22px;
+  font-weight: 600;
 }
 
 .step-description {
@@ -97,16 +98,17 @@ defineProps({
   margin-bottom: 30px;
 }
 
-.progress-header h3 {
+.progress-title {
   margin: 0 0 10px 0;
   color: #409eff;
-  font-size: 24px;
+  font-size: 28px;
+  font-weight: 600;
 }
 
 .progress-header p {
   margin: 0;
   color: #909399;
-  font-size: 16px;
+  font-size: 18px;
 }
 
 .main-progress {
@@ -115,7 +117,7 @@ defineProps({
 
 .progress-text {
   margin-top: 20px;
-  font-size: 16px;
+  font-size: 18px;
   color: #606266;
 }
 
@@ -158,7 +160,7 @@ defineProps({
 }
 
 .progress-detail span {
-  font-size: 14px;
+  font-size: 16px;
   color: #606266;
 }
 
@@ -244,4 +246,14 @@ defineProps({
     transform: scale(1);
   }
 }
-</style> 
+
+/* 全局字体大小优化 */
+:deep(.el-progress__text) {
+  font-size: 16px !important;
+  font-weight: 500;
+}
+
+:deep(.el-progress-bar__outer) {
+  font-size: 16px !important;
+}
+</style>

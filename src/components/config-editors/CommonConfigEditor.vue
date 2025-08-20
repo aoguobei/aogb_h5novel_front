@@ -18,9 +18,9 @@
       <el-form-item label="启用 Business ID" prop="deliver_business_id_enable">
         <el-switch v-model="form.deliver_business_id_enable" />
       </el-form-item>
-      
-      <el-form-item 
-        label="Deliver Business ID" 
+
+      <el-form-item
+        label="Deliver Business ID"
         prop="deliver_business_id"
         v-if="form.deliver_business_id_enable"
       >
@@ -31,9 +31,9 @@
       <el-form-item label="启用 Switch ID" prop="deliver_switch_id_enable">
         <el-switch v-model="form.deliver_switch_id_enable" />
       </el-form-item>
-      
-      <el-form-item 
-        label="Deliver Switch ID" 
+
+      <el-form-item
+        label="Deliver Switch ID"
         prop="deliver_switch_id"
         v-if="form.deliver_switch_id_enable"
       >
@@ -55,12 +55,12 @@
 
       <!-- 协议内容 -->
       <el-divider content-position="left">协议内容</el-divider>
-      
+
       <el-form-item label="用户协议" prop="protocol_about">
         <el-input
           v-model="form.protocol_about"
           type="textarea"
-          :rows="4"
+          :rows="3"
           placeholder="请输入用户协议内容"
         />
       </el-form-item>
@@ -69,7 +69,7 @@
         <el-input
           v-model="form.protocol_privacy"
           type="textarea"
-          :rows="4"
+          :rows="3"
           placeholder="请输入隐私协议内容"
         />
       </el-form-item>
@@ -78,7 +78,7 @@
         <el-input
           v-model="form.protocol_vod"
           type="textarea"
-          :rows="4"
+          :rows="3"
           placeholder="请输入付费协议内容"
         />
       </el-form-item>
@@ -87,7 +87,7 @@
         <el-input
           v-model="form.protocol_user_cancel"
           type="textarea"
-          :rows="4"
+          :rows="3"
           placeholder="请输入用户取消协议内容"
         />
       </el-form-item>
@@ -220,4 +220,4 @@ const handleClose = () => {
   justify-content: flex-end;
   gap: 12px;
 }
-</style> 
+</style>

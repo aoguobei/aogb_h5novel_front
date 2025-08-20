@@ -1,8 +1,8 @@
 <template>
   <div class="step-content">
     <div class="step-header">
-      <h2>第六步：小说特有配置</h2>
-      <p class="step-description">这些配置将存储到数据库中，并写入本地文件。仅抖音H5端需要配置</p>
+      <div class="step-title">第六步：小说特有配置</div>
+      <p class="step-description">配置小说业务特有的参数和设置</p>
     </div>
 
     <div v-if="basicInfo.host === 'tth5' && basicInfo.businessType === 'novel'">
@@ -76,14 +76,15 @@ const generateTTUrl = () => {
   border-bottom: 1px solid #ebeef5;
 }
 
-.step-header h2 {
+.step-title {
   margin: 0 0 8px 0;
-  color: #409eff;
-  font-size: 20px;
+  color: #2c3e50;
+  font-size: 22px;
+  font-weight: 600;
 }
 
 .step-description {
-  font-size: 14px;
+  font-size: 16px;
   color: #909399;
   margin-bottom: 15px;
   padding: 8px 12px;
@@ -96,4 +97,4 @@ const generateTTUrl = () => {
   text-align: center;
   padding: 40px 0;
 }
-</style> 
+</style>
