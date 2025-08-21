@@ -14,11 +14,19 @@
             <div class="function-options">
                 <div
                   class="function-option"
-                  :class="{ selected: selectedFunction === 'email' }"
-                  @click="onFunctionChange('email')"
+                  :class="{ selected: selectedFunction === 'domain' }"
+                  @click="onFunctionChange('domain')"
                 >
-                  <el-icon><Message /></el-icon>
-                  发送邮件
+                  <el-icon><Link /></el-icon>
+                  申请资质
+                </div>
+                <div
+                  class="function-option"
+                  :class="{ selected: selectedFunction === 'publish' }"
+                  @click="onFunctionChange('publish')"
+                >
+                  <el-icon><Upload /></el-icon>
+                  生成发布配置
                 </div>
                 <div
                   class="function-option"
@@ -36,24 +44,214 @@
       <!-- 右侧面板 -->
       <div class="right-panel">
 
-    <!-- 邮件发送模块 - 增强面板效果 -->
-    <div v-if="selectedFunction === 'email'" class="function-panel email-panel">
+    <!-- 申请资质模块 -->
+    <div v-if="selectedFunction === 'domain'" class="function-panel domain-panel">
       <div class="panel-header">
         <div class="header-content">
-          <el-icon class="panel-icon"><Message /></el-icon>
+          <el-icon class="panel-icon"><Link /></el-icon>
           <div class="header-text">
-            <div class="panel-title">邮件配置</div>
-            <p>填写您的邮箱，我们将发送详细的网站配置信息</p>
+            <div class="panel-title">申请资质</div>
+            <p>配置资质申请相关信息和后台配置</p>
           </div>
         </div>
       </div>
 
       <div class="panel-body">
-        <EmailForm
-          ref="emailFormRef"
-          :default-subject="'网站创建配置信息'"
-          @email-sent="handleEmailSent"
-        />
+        <div class="domain-content">
+          <div class="domain-steps">
+            <div
+              class="step-item"
+              :class="{ 'active': selectedStep === 'email' }"
+              @click="selectStep('email')"
+            >
+              <div class="step-icon-wrapper">
+                <el-icon class="step-icon"><Message /></el-icon>
+              </div>
+              <div class="step-title">发送邮件</div>
+              <p>申请域名，点击下方按钮使用邮件发送功能</p>
+            </div>
+
+            <div
+              class="step-item"
+              :class="{ 'active': selectedStep === 'backend' }"
+              @click="selectStep('backend')"
+            >
+              <div class="step-icon-wrapper">
+                <el-icon class="step-icon"><Setting /></el-icon>
+              </div>
+              <div class="step-title">网站应用后台配置</div>
+              <p>配置网站应用后台设置</p>
+              <div class="step-links">
+                <a href="https://open.kuaishou.com/platform/console?tabType=4" target="_blank" class="link-btn">
+                  <el-icon><Link /></el-icon>
+                  快手控制台
+                </a>
+                <a href="https://developer.open-douyin.com/console?type=4" target="_blank" class="link-btn">
+                  <el-icon><Link /></el-icon>
+                  抖音控制台
+                </a>
+              </div>
+            </div>
+
+            <div
+              class="step-item"
+              :class="{ 'active': selectedStep === 'poseidon' }"
+              @click="selectStep('poseidon')"
+            >
+              <div class="step-icon-wrapper">
+                <el-icon class="step-icon"><Setting /></el-icon>
+              </div>
+              <div class="step-title">波塞冬后台配置</div>
+              <p>配置波塞冬后台系统</p>
+            </div>
+          </div>
+
+          <!-- 邮件表单区域 -->
+          <div v-if="selectedStep === 'email'" class="content-section">
+            <div class="email-form-container">
+              <div class="email-form-header">
+                <el-icon class="form-icon"><Message /></el-icon>
+                <h3>发送配置邮件</h3>
+                <p>填写您的邮箱，我们将发送详细的网站配置信息</p>
+              </div>
+              <EmailForm
+                ref="emailFormRef"
+                :default-subject="'网站创建配置信息'"
+                :template="'domain'"
+                @email-sent="handleEmailSent"
+              />
+            </div>
+          </div>
+
+          <!-- 网站应用后台配置备注 -->
+          <div v-if="selectedStep === 'backend'" class="content-section">
+            <div class="notes-container">
+              <div class="horizontal alignCenter notes-header">
+                <el-icon class="notes-icon"><Document /></el-icon>
+                <div>
+                  <h3>网站应用后台配置说明</h3>
+                  <p>详细的配置步骤和注意事项</p>
+                </div>
+              </div>
+              <div class="step-notes">
+                <div class="note-item">
+                  <strong>抖音端配置：</strong>
+                  <ul>
+                    <li>添加开发者权限</li>
+                    <li>配置安全域名、应用信息、授权回调地址</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 波塞冬后台配置备注 -->
+          <div v-if="selectedStep === 'poseidon'" class="content-section">
+            <div class="notes-container">
+              <div class="horizontal alignCenter notes-header">
+                <el-icon class="notes-icon"><Document /></el-icon>
+                <div>
+                  <h3>波塞冬后台配置说明</h3>
+                  <p>详细的配置步骤和注意事项</p>
+                </div>
+              </div>
+              <div class="step-notes">
+                <div class="note-item">
+                  <strong>抖音端配置：</strong>
+                  <ul>
+                    <li>getSignInfo接口域名白名单配置</li>
+                    <li>播放接口内容问题处理</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- 生成发布配置模块 -->
+    <div v-if="selectedFunction === 'publish'" class="function-panel publish-panel">
+      <div class="panel-header">
+        <div class="header-content">
+          <el-icon class="panel-icon"><Upload /></el-icon>
+          <div class="header-text">
+            <div class="panel-title">生成发布配置</div>
+            <p>配置发布相关信息和发送通知邮件</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-body">
+        <div class="publish-content">
+          <div class="publish-steps">
+            <div
+              class="step-item"
+              :class="{ 'active': selectedStep === 'branch' }"
+              @click="selectStep('branch')"
+            >
+              <div class="step-icon-wrapper">
+                <el-icon class="step-icon"><Connection /></el-icon>
+              </div>
+              <div class="step-title">拉分支</div>
+              <p>找开发拉取相应的代码分支</p>
+            </div>
+
+            <div
+              class="step-item"
+              :class="{ 'active': selectedStep === 'publish-email' }"
+              @click="selectStep('publish-email')"
+            >
+              <div class="step-icon-wrapper">
+                <el-icon class="step-icon"><Message /></el-icon>
+              </div>
+              <div class="step-title">发邮件</div>
+              <p>发送发布配置邮件通知</p>
+            </div>
+          </div>
+
+          <!-- 拉分支备注 -->
+          <div v-if="selectedStep === 'branch'" class="content-section">
+            <div class="notes-container">
+              <div class="horizontal alignCenter notes-header">
+                <el-icon class="notes-icon"><Connection /></el-icon>
+                <div>
+                  <h3>拉分支说明</h3>
+                  <p>联系开发团队拉取相应的代码分支</p>
+                </div>
+              </div>
+              <div class="step-notes">
+                <div class="note-item">
+                  <strong>操作步骤：</strong>
+                  <ul>
+                    <li>联系开发团队负责人</li>
+                    <li>提供项目信息和分支名称</li>
+                    <li>确认分支拉取完成</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 发布邮件表单区域 -->
+          <div v-if="selectedStep === 'publish-email'" class="content-section">
+            <div class="email-form-container">
+              <div class="vertical align_center email-form-header">
+                <el-icon class="form-icon"><Message /></el-icon>
+                <h3>发送发布配置邮件</h3>
+                <p>填写收件人邮箱，发送发布配置信息</p>
+              </div>
+              <EmailForm
+                ref="publishEmailFormRef"
+                :default-subject="'网站发布配置信息'"
+                :template="'publish'"
+                @email-sent="handlePublishEmailSent"
+              />
+            </div>
+          </div>
+
+        </div>
       </div>
     </div>
 
@@ -115,37 +313,53 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Setting, Document, Monitor, Right, Message } from '@element-plus/icons-vue'
+import { Setting, Document, Monitor, Right, Message, Link, Upload, Connection } from '@element-plus/icons-vue'
 import EmailForm from '@/components/common/EmailForm.vue'
 import Header from '@/components/common/Header.vue'
 
 const router = useRouter()
 const selectedFunction = ref('generate')
 const emailFormRef = ref()
+const publishEmailFormRef = ref()
+const selectedStep = ref('') // 选中的步骤
 
 // 功能选择切换
 const onFunctionChange = (value) => {
-  if (value === 'email') {
-    console.log('切换到邮件发送模块')
-    selectedFunction.value = 'email'
+  if (value === 'domain') {
+    console.log('切换到申请资质模块')
+    selectedFunction.value = 'domain'
+  } else if (value === 'publish') {
+    console.log('切换到生成发布配置模块')
+    selectedFunction.value = 'publish'
   } else {
     console.log('切换到网站生成模块')
     selectedFunction.value = 'generate'
   }
 }
 
-// 处理邮件发送结果
-const handleEmailSent = (result) => {
-  if (result.success) {
-    ElMessage.success('邮件已发送，请查收！')
-    // 邮件发送成功后，可以考虑跳转到网站生成模块
-    selectedFunction.value = 'generate'
-  }
+// 处理申请资质
+const handleQualificationApply = () => {
+  ElMessage.success('资质申请功能开发中...')
 }
 
 // 跳转到创建网站页面
 const goToCreateWebsite = () => {
   router.push('/create-website')
+}
+
+// 选择步骤
+const selectStep = (step) => {
+  selectedStep.value = step
+}
+
+// 处理邮件发送成功
+const handleEmailSent = () => {
+  selectedStep.value = '' // 关闭表单
+}
+
+// 处理发布邮件发送成功
+const handlePublishEmailSent = () => {
+  selectedStep.value = '' // 关闭表单
 }
 </script>
 
@@ -300,7 +514,7 @@ const goToCreateWebsite = () => {
       display: flex;
       flex-direction: column;
 
-      // 特性展示
+      // 通用卡片样式
       .feature-highlights {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -308,35 +522,9 @@ const goToCreateWebsite = () => {
         margin-bottom: 30px;
 
         .feature-item {
+          .card-base();
           text-align: center;
           padding: 20px 15px;
-          background: rgba(255, 255, 255, 0.9);
-          border-radius: 16px;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-          border: 1px solid rgba(255, 255, 255, 0.4);
-          transition: all 0.3s ease;
-
-          &:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
-          }
-
-          .feature-icon-wrapper {
-            width: 60px;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 50%;
-            margin: 0 auto 15px;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-          }
-
-          .feature-icon {
-            font-size: 28px;
-            color: white;
-          }
 
           .feature-title {
             font-size: 16px;
@@ -350,6 +538,231 @@ const goToCreateWebsite = () => {
             line-height: 1.5;
             margin: 0;
             font-size: 13px;
+          }
+        }
+      }
+
+      // 通用卡片基础样式 mixin
+      .card-base() {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 16px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        transition: all 0.3s ease;
+
+        &:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+        }
+      }
+
+      // 通用图标样式
+      .feature-icon-wrapper,
+      .step-icon-wrapper {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        margin: 0 auto 15px;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+      }
+
+      .feature-icon,
+      .step-icon {
+        font-size: 28px;
+        color: white;
+      }
+
+      // 通用步骤展示样式
+      .domain-steps,
+      .publish-steps {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+
+        .step-item {
+          .card-base();
+          text-align: center;
+          padding: 20px 15px;
+          cursor: pointer;
+
+          &.active {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.4);
+          }
+
+
+
+          .step-title {
+            font-size: 16px;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-weight: 600;
+          }
+
+          p {
+            color: #7f8c8d;
+            line-height: 1.5;
+            margin: 0;
+            font-size: 13px;
+          }
+
+          .step-links {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+
+            .link-btn {
+              display: inline-flex;
+              align-items: center;
+              gap: 5px;
+              padding: 6px 12px;
+              background: transparent;
+              color: #667eea;
+              text-decoration: none;
+              border-radius: 6px;
+              font-size: 13px;
+              font-weight: 500;
+              transition: all 0.3s ease;
+              border: 1px solid #e1e8ed;
+
+              &:hover {
+                background: #f8f9fa;
+                color: #5a67d8;
+                border-color: #667eea;
+                text-decoration: none;
+              }
+
+              .el-icon {
+                font-size: 14px;
+              }
+            }
+          }
+        }
+      }
+
+      // 内容区域
+      .content-section {
+        margin-top: 30px;
+        animation: fadeInUp 0.3s ease;
+
+        // 邮件表单容器样式
+        .email-form-container {
+          background: rgba(255, 255, 255, 0.95);
+          border-radius: 16px;
+          box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
+          backdrop-filter: blur(15px);
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          padding: 25px;
+          transition: all 0.3s ease;
+
+          &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 35px rgba(0, 0, 0, 0.15);
+          }
+        }
+
+        // 通用头部样式
+        .email-form-header,
+        .notes-header {
+          margin-bottom: 20px;
+
+          .form-icon,
+          .notes-icon {
+            font-size: 32px;
+            color: #667eea;
+            margin-right: 10px;
+          }
+
+          h3 {
+            font-size: 18px;
+            color: #2c3e50;
+            margin: 10px 0 5px 0;
+            font-weight: 600;
+          }
+
+          p {
+            color: #7f8c8d;
+            margin: 0;
+            font-size: 14px;
+          }
+        }
+
+        // 邮件表单头部特殊样式
+        .email-form-header {
+          text-align: center;
+
+          .form-icon {
+            margin-bottom: 10px;
+            margin-right: 0;
+          }
+        }
+      }
+
+      // 备注样式
+      .step-notes {
+        margin-top: 15px;
+        margin-bottom: 15px;
+        padding: 16px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 12px;
+        border: 1px solid #dee2e6;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+
+        .note-item {
+          margin-bottom: 12px;
+          padding: 12px 16px;
+          background: rgba(255, 255, 255, 0.9);
+          border-radius: 8px;
+          border-left: 4px solid #667eea;
+          transition: all 0.3s ease;
+
+          &:hover {
+            transform: translateX(2px);
+            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.1);
+          }
+
+          &:last-child {
+            margin-bottom: 0;
+          }
+
+          strong {
+            color: #2c3e50;
+            font-weight: 600;
+            font-size: 14px;
+            display: block;
+            margin-bottom: 8px;
+          }
+
+          ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            color: #555;
+            font-size: 13px;
+            line-height: 1.6;
+
+            li {
+              margin-bottom: 4px;
+              position: relative;
+              padding-left: 16px;
+
+              &::before {
+                content: "•";
+                position: absolute;
+                left: 0;
+                top: 0;
+                color: #667eea;
+                font-weight: bold;
+                font-size: 14px;
+              }
+            }
           }
         }
       }
@@ -452,6 +865,18 @@ const goToCreateWebsite = () => {
 
 
     }
+  }
+}
+
+// 动画效果
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 </style>

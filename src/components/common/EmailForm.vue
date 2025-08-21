@@ -1,9 +1,9 @@
 <template>
   <div class="email-form-component">
-    <div class="form-header">
+    <!-- <div class="form-header">
       <div class="form-title">发送邮件通知</div>
       <p>发送邮件给相关人员，通知网站创建计划</p>
-    </div>
+    </div> -->
 
     <el-form
       ref="emailFormRef"
@@ -20,14 +20,13 @@
         <div class="form-tip">请输入您要用来发送邮件的邮箱地址</div>
       </el-form-item>
 
-      <el-form-item label="邮箱授权码" prop="userPassword">
+      <el-form-item label="邮箱密码" prop="userPassword">
         <el-input
           v-model="emailForm.userPassword"
           type="password"
-          placeholder="请输入邮箱授权码"
+          placeholder="请输入邮箱密码"
           show-password
         />
-        <div class="form-tip">请输入邮箱的授权码（不是登录密码）</div>
       </el-form-item>
 
 
@@ -106,14 +105,21 @@
           ></div>
         </div>
         <div class="editor-actions">
-          <el-button link @click="useTemplate">使用模板</el-button>
+          <el-button link @click="useTemplate">
+            {{ props.template === 'publish' ? '使用发布配置模板' : '使用域名申请模板' }}
+          </el-button>
           <el-button link @click="clearContent">清空内容</el-button>
           <el-button link @click="toggleHtmlMode">{{ isHtmlMode ? '预览模式' : 'HTML模式' }}</el-button>
         </div>
       </el-form-item>
 
       <el-form-item>
-        <el-button type="primary" @click="sendEmail" :loading="sending">
+        <el-button
+          type="primary"
+          @click="sendEmail"
+          :loading="sending"
+          :disabled="!isFormValid"
+        >
           发送邮件
         </el-button>
 <!--        <el-button @click="$emit('next-step')" :disabled="!emailForm.content">-->
@@ -125,7 +131,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, defineEmits, defineProps, onMounted, nextTick } from 'vue'
+import { ref, reactive, defineEmits, defineProps, onMounted, nextTick, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { emailAPI } from '@/api/email'
 
@@ -136,11 +142,15 @@ const emit = defineEmits(['email-sent', 'next-step'])
 const props = defineProps({
   defaultTo: {
     type: String,
-          default: ''
+    default: ''
   },
   defaultSubject: {
     type: String,
     default: '小说业务需域名申请'
+  },
+  template: {
+    type: String,
+    default: 'domain' // 'domain' 域名申请模板, 'publish' 发布配置模板
   }
 })
 
@@ -180,7 +190,7 @@ const emailRules = {
     { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
   ],
   userPassword: [
-    { required: true, message: '请输入邮箱授权码', trigger: 'blur' }
+    { required: true, message: '请输入邮箱密码', trigger: 'blur' }
   ],
   to: [
     { required: true, message: '请输入收件人邮箱', trigger: 'blur' },
@@ -194,9 +204,35 @@ const emailRules = {
   ]
 }
 
+// 检查表单是否有效
+const isFormValid = computed(() => {
+  // 检查所有必填字段是否都有值
+  const hasRequiredFields = emailForm.userEmail &&
+                           emailForm.userPassword &&
+                           emailForm.to &&
+                           emailForm.subject &&
+                           emailForm.content
+
+  // 检查邮箱格式（简单验证）
+  const isValidEmailFormat = (email) => {
+    return email && email.includes('@') && email.includes('.') && email.length > 5
+  }
+
+  const hasValidEmails = isValidEmailFormat(emailForm.userEmail) &&
+                        isValidEmailFormat(emailForm.to)
+
+  // 检查内容是否为空（去除HTML标签后）
+  const hasValidContent = emailForm.content &&
+                         emailForm.content.replace(/<[^>]*>/g, '').trim().length > 0
+
+  return hasRequiredFields && hasValidEmails && hasValidContent
+})
+
 // 邮件模板
-const generateEmailTemplate = () => {
-  return `你好，${emailForm.to ? emailForm.to.split('@')[0] : ''}老师：<br>
+const emailTemplates = {
+  // 域名申请模板
+  domain: () => {
+    return `你好，${emailForm.to ? emailForm.to.split('@')[0] : ''}老师：<br>
 小说业务需进行h5投放，需要申请域名使用，具体如下：<br><br>
 ● <strong>武汉主体：</strong><br>
 趣读故事会（武汉主体）<br>
@@ -207,6 +243,31 @@ noveltestqd.funshion.tv<br>
 <a href="https://novetest.fun.tv/tt/xingchen/pages/readerPage/readerPage?cartoon_id=566190&num=5">https://novetest.fun.tv/tt/xingchen/pages/readerPage/readerPage?cartoon_id=566190&num=5</a><br>
 <a href="https://novel.fun.tv/tt/xingchen/pages/readerPage/readerPage?cartoon_id=566190&num=5">https://novel.fun.tv/tt/xingchen/pages/readerPage/readerPage?cartoon_id=566190&num=5</a><br><br>
 如有疑问，随时沟通，谢谢！`
+  },
+
+  // 发布配置模板
+  publish: () => {
+    return `你好，${emailForm.to ? emailForm.to.split('@')[0] : ''}老师：<br>
+因小说业务需要，辛苦帮忙创建发布配置，具体如下：<br><br>
+<strong>//正式环境</strong><br>
+域名：https://noveljinse.funshion.tv<br>
+目录：tt/jinse<br>
+代码：git@code.funshion.com:somalia/funnovel.git<br>
+分支: release_tt_jinse<br><br>
+<strong>//测试环境</strong><br>
+域名：https://noveltestjinse.funshion.tv<br>
+目录：tt/jinse<br>
+代码：git@code.funshion.com:somalia/funnovel.git<br>
+分支: master_tt_jinse<br><br>
+如有疑问，随时沟通，谢谢！`
+  }
+}
+
+// 获取当前模板内容
+const generateEmailTemplate = () => {
+  const templateType = props.template || 'domain'
+  const template = emailTemplates[templateType]
+  return template ? template() : emailTemplates.domain()
 }
 
 // 富文本编辑器相关方法
@@ -258,6 +319,10 @@ onMounted(async () => {
     // 设置初始内容
     if (emailForm.content) {
       editorRef.value.innerHTML = emailForm.content
+    } else {
+      // 如果没有内容，自动加载对应模板
+      const template = generateEmailTemplate()
+      setEditorContent(template)
     }
   }
 })
@@ -266,7 +331,8 @@ onMounted(async () => {
 const useTemplate = () => {
   const template = generateEmailTemplate()
   setEditorContent(template)
-  ElMessage.success('已加载邮件模板')
+  const templateName = props.template === 'publish' ? '发布配置' : '域名申请'
+  ElMessage.success(`已加载${templateName}邮件模板`)
 }
 
 // 清空内容
@@ -302,22 +368,11 @@ const sendEmail = async () => {
         data: response.data,
         message: response.message
       })
-    } else {
-      ElMessage.error(response.message || '邮件发送失败')
-      emit('email-sent', {
-        success: false,
-        message: response.message || '邮件发送失败'
-      })
     }
-
   } catch (error) {
     console.error('发送邮件失败:', error)
-    const errorMessage = '邮件发送失败，请检查网络连接或联系管理员'
-    ElMessage.error(errorMessage)
-    emit('email-sent', {
-      success: false,
-      message: errorMessage
-    })
+    // const errorMessage = '邮件发送失败，请检查网络连接或联系管理员'
+    // ElMessage.error(errorMessage)
   } finally {
     sending.value = false
   }
@@ -358,7 +413,7 @@ defineExpose({
   color: #606266;
 }
 
-.form-header {
+/* .form-header {
   margin-bottom: 30px;
   text-align: center;
 }
@@ -373,7 +428,7 @@ defineExpose({
 .form-header p {
   color: #909399;
   margin: 0;
-}
+} */
 
 /* 邮件表单 */
 .email-form {
@@ -497,5 +552,16 @@ defineExpose({
   .email-form {
     max-width: 100%;
   }
+}
+
+/* 禁用按钮样式 */
+.el-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.el-button:disabled:hover {
+  transform: none !important;
+  box-shadow: none !important;
 }
 </style>

@@ -19,9 +19,9 @@ request.interceptors.request.use(
 request.interceptors.response.use(
   response => response.data,
   error => {
-    ElMessage.error(error.response?.data?.message || '请求失败')
+    ElMessage.error(error.response?.data?.message || error.response?.data?.error || '请求失败')
     return Promise.reject(error)
   }
 )
 
-export default request 
+export default request
