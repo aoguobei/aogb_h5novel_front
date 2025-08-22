@@ -36,6 +36,15 @@
                   <el-icon><Monitor /></el-icon>
                   生成网站
                 </div>
+
+                <div
+                  class="function-option"
+                  :class="{ selected: selectedFunction === 'preview' }"
+                  @click="onFunctionChange('preview')"
+                >
+                  <el-icon><View /></el-icon>
+                  预览功能
+                </div>
             </div>
           </div>
         </div>
@@ -298,8 +307,92 @@
               <el-icon><Right /></el-icon>
               开始创建网站
             </el-button>
+          </div>
+        </div>
+      </div>
+    </div>
 
+    <!-- 预览功能模块 -->
+    <div v-if="selectedFunction === 'preview'" class="function-panel preview-panel">
+      <div class="panel-header">
+        <div class="header-content">
+          <el-icon class="panel-icon"><View /></el-icon>
+          <div class="header-text">
+            <div class="panel-title">预览功能</div>
+            <p>查看测试用例集合，体验网站效果</p>
+          </div>
+        </div>
+      </div>
 
+      <div class="panel-body">
+        <div class="preview-content">
+          <div class="preview-links-section">
+            <div class="preview-link-card">
+              <div class="horizontal alignCenter link-header">
+                <el-icon class="link-icon"><Monitor /></el-icon>
+                <div class="link-info">
+                  <h4>前端测试页面</h4>
+                  <p>体验完整的用户端功能展示</p>
+                </div>
+              </div>
+              <div class="link-actions">
+                <a
+                  href="http://172.17.3.118:5000/index.html"
+                  target="_blank"
+                  class="preview-btn primary"
+                >
+                  <el-icon><View /></el-icon>
+                  查看页面
+                </a>
+                <div class="link-url">
+                  <span>http://172.17.3.118:5000/index.html</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="preview-link-card">
+              <div class="link-header">
+                <el-icon class="link-icon"><Setting /></el-icon>
+                <div class="link-info">
+                  <h4>后台管理页面</h4>
+                  <p>体验完整的后台管理功能</p>
+                </div>
+              </div>
+              <div class="link-actions">
+                <a
+                  href="http://172.17.3.118:5000/admin.html"
+                  target="_blank"
+                  class="preview-btn primary"
+                >
+                  <el-icon><Setting /></el-icon>
+                  管理后台
+                </a>
+                <div class="link-url">
+                  <span>http://172.17.3.118:5000/admin.html</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="preview-features">
+            <h3>功能特点</h3>
+            <div class="features-grid">
+              <div class="feature-card">
+                <el-icon class="feature-icon"><Monitor /></el-icon>
+                <h4>测试用例集合</h4>
+                <p>集合所有测试用例，无需查找文档</p>
+              </div>
+              <div class="feature-card">
+                <el-icon class="feature-icon"><Setting /></el-icon>
+                <h4>用例管理</h4>
+                <p>支持管理测试用例，进行增删改查</p>
+              </div>
+              <div class="feature-card">
+                <el-icon class="feature-icon"><Link /></el-icon>
+                <h4>便捷访问</h4>
+                <p>一键跳转，即时扫码查看网站效果，无需手动拷贝测试链接</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -313,7 +406,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { Setting, Document, Monitor, Right, Message, Link, Upload, Connection } from '@element-plus/icons-vue'
+import { Setting, Document, Monitor, Right, Message, Link, Upload, Connection, View, InfoFilled } from '@element-plus/icons-vue'
 import EmailForm from '@/components/common/EmailForm.vue'
 import Header from '@/components/common/Header.vue'
 
@@ -331,6 +424,9 @@ const onFunctionChange = (value) => {
   } else if (value === 'publish') {
     console.log('切换到生成发布配置模块')
     selectedFunction.value = 'publish'
+  } else if (value === 'preview') {
+    console.log('切换到预览功能模块')
+    selectedFunction.value = 'preview'
   } else {
     console.log('切换到网站生成模块')
     selectedFunction.value = 'generate'
@@ -466,6 +562,8 @@ const handlePublishEmailSent = () => {
             height: 22px;
           }
         }
+
+
       }
     }
   }
@@ -797,7 +895,294 @@ const handlePublishEmailSent = () => {
           }
         }
 
+        // 预览功能样式
+        .preview-section {
+          margin-top: 30px;
+          padding: 25px;
+          background: rgba(255, 255, 255, 0.95);
+          border-radius: 16px;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          transition: all 0.3s ease;
 
+          &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+          }
+
+          .preview-header {
+            margin-bottom: 20px;
+            text-align: center;
+
+            .preview-icon {
+              font-size: 32px;
+              color: #667eea;
+              margin-bottom: 10px;
+            }
+
+            h3 {
+              font-size: 18px;
+              color: #2c3e50;
+              margin: 10px 0 5px 0;
+              font-weight: 600;
+            }
+
+            p {
+              color: #7f8c8d;
+              margin: 0;
+              font-size: 14px;
+            }
+          }
+
+          .preview-links {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+
+            .preview-link {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 12px;
+              padding: 16px 20px;
+              background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+              color: #495057;
+              text-decoration: none;
+              border-radius: 12px;
+              border: 2px solid transparent;
+              font-weight: 500;
+              font-size: 15px;
+              transition: all 0.3s ease;
+              position: relative;
+              overflow: hidden;
+
+              &:hover {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+                text-decoration: none;
+              }
+
+              .el-icon {
+                font-size: 18px;
+                width: 18px;
+                height: 18px;
+              }
+
+              .external-icon {
+                font-size: 14px;
+                opacity: 0.8;
+                margin-left: auto;
+              }
+
+              span {
+                flex: 1;
+                text-align: center;
+              }
+
+              // 添加悬停时的光效
+              &::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+                transition: left 0.5s;
+              }
+
+              &:hover::before {
+                left: 100%;
+              }
+            }
+          }
+        }
+      }
+
+    }
+  }
+
+  // 预览功能模块样式
+  .preview-panel {
+    .preview-content {
+      .preview-description {
+        margin-bottom: 30px;
+
+        .description-card {
+          gap: 15px;
+          padding: 0 10px 10px;
+          background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+          border-radius: 12px;
+          border: 1px solid #dee2e6;
+
+          .description-icon {
+            font-size: 24px;
+            color: #667eea;
+            margin-top: 2px;
+          }
+
+          .description-text {
+            font-size: 16px;
+            color: #2c3e50;
+
+            p {
+              color: #6c757d;
+              margin: 0;
+              font-size: 14px;
+            }
+          }
+        }
+      }
+
+      .preview-links-section {
+        margin-bottom: 20px;
+
+        .preview-link-card {
+          background: rgba(255, 255, 255, 0.9);
+          border-radius: 12px;
+          padding: 15px;
+          margin-bottom: 10px;
+          border: 1px solid #e9ecef;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+          transition: all 0.3s ease;
+
+          &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+          }
+
+          .link-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+
+            .link-icon {
+              font-size: 24px;
+              color: #667eea;
+              width: 24px;
+              height: 24px;
+            }
+
+            .link-info {
+              h4 {
+                font-size: 16px;
+                color: #2c3e50;
+                margin: 0 0 5px 0;
+                font-weight: 600;
+              }
+
+              p {
+                color: #6c757d;
+                margin: 0;
+                font-size: 14px;
+              }
+            }
+          }
+
+          .link-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+
+            .preview-btn {
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              gap: 8px;
+              padding: 12px 20px;
+              border-radius: 8px;
+              text-decoration: none;
+              font-weight: 500;
+              font-size: 14px;
+              transition: all 0.3s ease;
+              border: none;
+              cursor: pointer;
+
+              &.primary {
+                background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                color: #495057;
+                border: 1px solid #dee2e6;
+
+                &:hover {
+                  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                  color: white;
+                  border-color: transparent;
+                  transform: translateY(-2px);
+                }
+              }
+
+              .el-icon {
+                font-size: 16px;
+                width: 16px;
+                height: 16px;
+              }
+            }
+
+            .link-url {
+              span {
+                font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+                font-size: 12px;
+                color: #6c757d;
+              }
+            }
+          }
+        }
+      }
+
+      .preview-features {
+        h3 {
+          font-size: 18px;
+          color: #2c3e50;
+          margin: 0 0 20px 0;
+          font-weight: 600;
+          text-align: center;
+        }
+
+        .features-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 20px;
+
+          .feature-card {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #e9ecef;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+
+            &:hover {
+              transform: translateY(-3px);
+              box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+            }
+
+            .feature-icon {
+              font-size: 32px;
+              color: #667eea;
+              margin-bottom: 15px;
+              width: 32px;
+              height: 32px;
+            }
+
+            h4 {
+              font-size: 16px;
+              color: #2c3e50;
+              margin: 0 0 10px 0;
+              font-weight: 600;
+            }
+
+            p {
+              color: #6c757d;
+              margin: 0;
+              font-size: 14px;
+              line-height: 1.5;
+            }
+          }
+        }
       }
     }
   }
