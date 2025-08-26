@@ -208,6 +208,7 @@ onMounted(async () => {
 /* 左侧平台选择区域 */
 .platform-selector {
   width: 380px;
+  box-sizing: border-box;
   background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
   border-radius: 20px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);

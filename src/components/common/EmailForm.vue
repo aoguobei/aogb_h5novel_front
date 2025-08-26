@@ -102,6 +102,7 @@
             @paste="onPaste"
             @keydown="onKeyDown"
             placeholder="请输入邮件内容"
+            style="word-wrap: break-word; overflow-wrap: break-word; word-break: break-word; max-width: 100%;"
           ></div>
         </div>
         <div class="editor-actions">
@@ -432,8 +433,10 @@ defineExpose({
 
 /* 邮件表单 */
 .email-form {
-  max-width: 600px;
+  width: 100%;
+  max-width: 100%;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
 .form-tip {
@@ -466,6 +469,7 @@ defineExpose({
   border: 1px solid #dcdfe6;
   border-radius: 6px;
   transition: border-color 0.2s;
+  box-sizing: border-box;
 }
 
 .rich-editor-container:hover {
@@ -478,7 +482,7 @@ defineExpose({
 }
 
 .rich-editor {
-  min-height: 00px;
+  min-height: 200px;
   padding: 12px;
   outline: none;
   line-height: 1.6;
@@ -522,6 +526,35 @@ defineExpose({
 
 .editor-actions .el-button:hover {
   color: #409eff;
+}
+
+/* 小屏幕响应式样式 */
+@media (max-width: 768px) {
+  .rich-editor {
+    min-height: 150px;
+    padding: 8px;
+    font-size: 13px;
+  }
+
+  /* 编辑器操作按钮在小屏幕上换行 */
+  .editor-actions {
+    gap: 8px;
+  }
+
+  .editor-actions .el-button {
+    font-size: 11px;
+    padding: 2px 6px;
+  }
+
+  /* 表单提示文字 */
+  .form-tip {
+    font-size: 11px;
+  }
+
+  /* 提示框样式 */
+  .tips-content {
+    font-size: 12px;
+  }
 }
 
 /* 表单项样式 */

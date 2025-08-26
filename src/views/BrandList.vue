@@ -222,6 +222,7 @@ onMounted(async () => {
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   overflow: hidden;
   border: 1px solid #e2e8f0;
+  box-sizing: border-box;
 }
 
 .panel-header {

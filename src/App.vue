@@ -24,6 +24,10 @@
             <el-icon><Document /></el-icon>
             <span>网站生成</span>
           </el-menu-item>
+          <el-menu-item index="/git-sync">
+            <el-icon><Refresh /></el-icon>
+            <span>代码同步</span>
+          </el-menu-item>
         </el-menu>
       </el-aside>
       <el-container>
@@ -36,7 +40,7 @@
 </template>
 
 <script setup>
-import { House, Setting, Document } from '@element-plus/icons-vue'
+import { House, Setting, Document, Refresh } from '@element-plus/icons-vue'
 </script>
 
 <style lang="less">

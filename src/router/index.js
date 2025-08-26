@@ -4,6 +4,7 @@ import CreateWebsite from '../views/CreateWebsite.vue'
 import WebsiteConfig from '../views/WebsiteConfig.vue'
 import WebsiteConfigs from '../views/WebsiteConfigs.vue'
 import WebsiteGeneration from '../views/WebsiteGeneration.vue'
+import GitSync from '../views/GitSync.vue'
 
 const routes = [
   {
@@ -33,11 +34,17 @@ const routes = [
     path: '/website-generation',
     name: 'WebsiteGeneration',
     component: WebsiteGeneration
+  },
+
+  {
+    path: '/git-sync',
+    name: 'GitSync',
+    component: GitSync
   }
 ]
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory('/h5novelwebconfig/'),
   routes
 })
 
