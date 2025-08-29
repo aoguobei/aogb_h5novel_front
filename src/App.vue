@@ -28,6 +28,10 @@
             <el-icon><Refresh /></el-icon>
             <span>代码同步</span>
           </el-menu-item>
+          <el-menu-item index="/deploy">
+            <el-icon><Upload /></el-icon>
+            <span>部署管理</span>
+          </el-menu-item>
         </el-menu>
       </el-aside>
       <el-container>
@@ -40,7 +44,7 @@
 </template>
 
 <script setup>
-import { House, Setting, Document, Refresh } from '@element-plus/icons-vue'
+import { House, Setting, Document, Refresh, Upload } from '@element-plus/icons-vue'
 </script>
 
 <style lang="less">

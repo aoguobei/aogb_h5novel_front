@@ -1,23 +1,22 @@
 {
-  "name": "brand-config-frontend",
+  "name": "nginx-deploy-frontend",
   "version": "1.0.0",
-  "private": true,
+  "description": "Nginx配置部署工具前端",
   "scripts": {
-    "dev": "vite --host ",
+    "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
   },
   "dependencies": {
-    "@element-plus/icons-vue": "^2.1.0",
-    "axios": "^1.4.0",
-    "element-plus": "^2.10.4",
-    "less": "^4.4.0",
-    "pinia": "^2.1.6",
     "vue": "^3.3.4",
-    "vue-router": "^4.2.4"
+    "element-plus": "^2.3.8",
+    "@element-plus/icons-vue": "^2.1.0"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.2.3",
-    "vite": "^4.4.5"
+    "vite": "^4.4.5",
+    "eslint": "^8.45.0",
+    "eslint-plugin-vue": "^9.15.1"
   }
 }

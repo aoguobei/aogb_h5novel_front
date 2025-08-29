@@ -5,6 +5,7 @@ import WebsiteConfig from '../views/WebsiteConfig.vue'
 import WebsiteConfigs from '../views/WebsiteConfigs.vue'
 import WebsiteGeneration from '../views/WebsiteGeneration.vue'
 import GitSync from '../views/GitSync.vue'
+import DeployManager from '../components/deploy/DeployManager.vue'
 
 const routes = [
   {
@@ -40,6 +41,11 @@ const routes = [
     path: '/git-sync',
     name: 'GitSync',
     component: GitSync
+  },
+  {
+    path: '/deploy',
+    name: 'DeployManager',
+    component: DeployManager
   }
 ]
 

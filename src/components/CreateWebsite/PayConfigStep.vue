@@ -17,10 +17,10 @@
       </el-form-item>
       <div v-if="payConfig.normal_pay_enable" class="gateway-row">
         <el-form-item label="Android网关ID" required>
-          <el-input-number v-model="payConfig.normal_pay_gateway_android" :min="0" />
+          <el-input-number data-e2e="normal-android" v-model="payConfig.normal_pay_gateway_android" :min="0" />
         </el-form-item>
         <el-form-item label="iOS网关ID" required>
-          <el-input-number v-model="payConfig.normal_pay_gateway_ios" :min="0" />
+          <el-input-number data-e2e="normal-ios" v-model="payConfig.normal_pay_gateway_ios" :min="0" />
         </el-form-item>
       </div>
 
@@ -35,10 +35,10 @@
       </el-form-item>
       <div v-if="payConfig.renew_pay_enable" class="gateway-row">
         <el-form-item label="Android网关ID" required>
-          <el-input-number v-model="payConfig.renew_pay_gateway_android" :min="0" />
+          <el-input-number data-e2e="renew-android" v-model="payConfig.renew_pay_gateway_android" :min="0" />
         </el-form-item>
         <el-form-item label="iOS网关ID" required>
-          <el-input-number v-model="payConfig.renew_pay_gateway_ios" :min="0" />
+          <el-input-number data-e2e="renew-ios" v-model="payConfig.renew_pay_gateway_ios" :min="0" />
         </el-form-item>
       </div>
     </el-form>

@@ -77,6 +77,31 @@
         />
       </el-form-item>
 
+      <!-- 发布配置模板时显示小说多选 -->
+      <el-form-item v-if="template === 'publish'" label="选择小说" prop="selectedNovels">
+        <el-select
+          v-model="emailForm.selectedNovels"
+          multiple
+          placeholder="请选择要创建发布配置的小说"
+          style="width: 100%"
+          :loading="novelsLoading"
+          @change="updateEmailContent"
+        >
+          <el-option
+            v-for="novel in availableNovels"
+            :key="novel.value"
+            :label="novel.label"
+            :value="novel.value"
+          >
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <span>{{ novel.label }}</span>
+              <el-tag size="small" :type="novel.hostType">{{ novel.hostLabel }}</el-tag>
+            </div>
+          </el-option>
+        </el-select>
+        <div class="form-tip">选择需要创建发布配置的小说（支持多选）</div>
+      </el-form-item>
+
       <el-form-item label="邮件内容" prop="content">
         <!-- 编辑提示信息 -->
         <div class="editor-tips">
@@ -135,6 +160,7 @@
 import { ref, reactive, defineEmits, defineProps, onMounted, nextTick, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { emailAPI } from '@/api/email'
+import { useNovelSelector } from '@/composables/useConfig'
 
 // 定义事件
 const emit = defineEmits(['email-sent', 'next-step'])
@@ -160,6 +186,44 @@ const emailFormRef = ref()
 const editorRef = ref()
 const isHtmlMode = ref(false)
 
+// 使用小说选择器
+const {
+  novelsLoading,
+  allNovelData,
+  fetchNovelOptions
+} = useNovelSelector()
+
+// 可用的小说选项（转换为适合select组件的格式）
+const availableNovels = computed(() => {
+  return allNovelData.value.map(novel => ({
+    value: `${novel.clientId}-${novel.host}-${novel.brandCode}`,
+    label: `${novel.appName} (${novel.brandCode})`,
+    hostLabel: getHostLabel(novel.host),
+    hostType: getHostType(novel.host),
+    data: novel
+  }))
+})
+
+// 获取端的显示标签
+const getHostLabel = (host) => {
+  const hostMap = {
+    'tth5': 'TT H5',
+    'ksh5': 'KS H5', 
+    'h5': 'H5'
+  }
+  return hostMap[host] || host
+}
+
+// 获取端的标签类型
+const getHostType = (host) => {
+  const typeMap = {
+    'tth5': 'primary',
+    'ksh5': 'success',
+    'h5': 'warning'
+  }
+  return typeMap[host] || 'info'
+}
+
 // 默认收件人选项
 const defaultToOptions = [
   'aogb@fun.tv',
@@ -181,7 +245,8 @@ const emailForm = reactive({
   to: props.defaultTo,
   cc: [], // 抄送人，支持多个
   subject: props.defaultSubject,
-  content: ''
+  content: '',
+  selectedNovels: [] // 选择的小说列表
 })
 
 // 邮件表单验证规则
@@ -202,6 +267,13 @@ const emailRules = {
   ],
   content: [
     { required: true, message: '请输入邮件内容', trigger: 'blur' }
+  ],
+  selectedNovels: [
+    { 
+      required: false, // 不再必需，可以默认选择第一个小说
+      message: '请选择至少一个小说', 
+      trigger: 'change'
+    }
   ]
 }
 
@@ -233,34 +305,133 @@ const isFormValid = computed(() => {
 const emailTemplates = {
   // 域名申请模板
   domain: () => {
-    return `你好，${emailForm.to ? emailForm.to.split('@')[0] : ''}老师：<br>
+    // 如果没有选择小说，默认使用第一个小说
+    let novelsToProcess = emailForm.selectedNovels
+    if (!novelsToProcess || novelsToProcess.length === 0) {
+      if (availableNovels.value.length > 0) {
+        novelsToProcess = [availableNovels.value[0].value]
+      } else {
+        return `你好，${emailForm.to ? emailForm.to.split('@')[0] : ''}老师：<br>
 小说业务需进行h5投放，需要申请域名使用，具体如下：<br><br>
-● <strong>武汉主体：</strong><br>
-趣读故事会（武汉主体）<br>
-novelqd.funshion.tv<br>
-noveltestqd.funshion.tv<br>
+<strong>暂无可用的小说配置</strong><br><br>
+如有疑问，随时沟通，谢谢！`
+      }
+    }
+
+    let content = `你好，${emailForm.to ? emailForm.to.split('@')[0] : ''}老师：<br>
+小说业务需进行h5投放，需要申请域名使用，具体如下：<br><br>`
+
+    // 为每个选择的小说生成域名申请信息
+    novelsToProcess.forEach((selectedValue, index) => {
+      const novel = availableNovels.value.find(n => n.value === selectedValue)
+      if (!novel) return
+
+      const novelData = novel.data
+      const brandCode = novelData.brandCode
+      const ttLoginCallbackDomain = novelData.tt_login_callback_domain
+
+      // 生成域名
+      let testDomain, prodDomain
+      if (ttLoginCallbackDomain) {
+        // 使用小说配置中的tt_login_callback_domain作为测试环境域名
+        testDomain = ttLoginCallbackDomain
+        // 生产环境域名是测试环境域名去掉test
+        prodDomain = testDomain.replace('test', '')
+      } else {
+        // 如果没有配置tt_login_callback_domain，使用默认规则
+        testDomain = `noveltest${brandCode}.funshion.tv`
+        prodDomain = `novel${brandCode}.funshion.tv`
+      }
+
+      if (index > 0) content += '<br>'
+
+      content += `<strong>${index + 1}. ${novel.label}</strong><br>
+● <strong>域名申请：</strong><br>
+${prodDomain}<br>
+${testDomain}<br>
 解析到 <strong>funshion.tv</strong> 的服务器即可<br><br>
 ● <strong>访问域名根目录重定向到：</strong><br>
-<a href="https://novetest.fun.tv/tt/xingchen/pages/readerPage/readerPage?cartoon_id=566190&num=5">https://novetest.fun.tv/tt/xingchen/pages/readerPage/readerPage?cartoon_id=566190&num=5</a><br>
-<a href="https://novel.fun.tv/tt/xingchen/pages/readerPage/readerPage?cartoon_id=566190&num=5">https://novel.fun.tv/tt/xingchen/pages/readerPage/readerPage?cartoon_id=566190&num=5</a><br><br>
-如有疑问，随时沟通，谢谢！`
+<a href="https://${testDomain}">https://${testDomain}</a><br>
+<a href="https://${prodDomain}">https://${prodDomain}</a><br><br>`
+    })
+
+    content += `如有疑问，随时沟通，谢谢！`
+    return content
   },
 
   // 发布配置模板
   publish: () => {
-    return `你好，${emailForm.to ? emailForm.to.split('@')[0] : ''}老师：<br>
+    // 如果没有选择小说，默认使用第一个小说
+    let novelsToProcess = emailForm.selectedNovels
+    if (!novelsToProcess || novelsToProcess.length === 0) {
+      if (availableNovels.value.length > 0) {
+        novelsToProcess = [availableNovels.value[0].value]
+      } else {
+        return `你好，${emailForm.to ? emailForm.to.split('@')[0] : ''}老师：<br>
 因小说业务需要，辛苦帮忙创建发布配置，具体如下：<br><br>
-<strong>//正式环境</strong><br>
-域名：https://noveljinse.funshion.tv<br>
-目录：tt/jinse<br>
-代码：git@code.funshion.com:somalia/funnovel.git<br>
-分支: release_tt_jinse<br><br>
-<strong>//测试环境</strong><br>
-域名：https://noveltestjinse.funshion.tv<br>
-目录：tt/jinse<br>
-代码：git@code.funshion.com:somalia/funnovel.git<br>
-分支: master_tt_jinse<br><br>
+<strong>暂无可用的小说配置</strong><br><br>
 如有疑问，随时沟通，谢谢！`
+      }
+    }
+
+    let content = `你好，${emailForm.to ? emailForm.to.split('@')[0] : ''}老师：<br>
+因小说业务需要，辛苦帮忙创建发布配置，具体如下：<br><br>`
+
+    // 为每个选择的小说生成配置
+    novelsToProcess.forEach((selectedValue, index) => {
+      const novel = availableNovels.value.find(n => n.value === selectedValue)
+      if (!novel) return
+
+      const novelData = novel.data
+      const brandCode = novelData.brandCode
+      const originalHost = novelData.host
+      const scriptBase = novelData.script_base || brandCode
+      const ttLoginCallbackDomain = novelData.tt_login_callback_domain
+
+      // 根据端类型映射host值
+      const getHostForBranch = (host) => {
+        if (host === 'tth5') return 'tt'
+        if (host === 'ksh5') return 'ks'
+        if (host === 'h5') return 'h5'
+        return host // 默认返回原值
+      }
+
+      const hostForBranch = getHostForBranch(originalHost)
+
+      // 生成域名
+      let testDomain, prodDomain
+      if (ttLoginCallbackDomain) {
+        // 使用小说配置中的tt_login_callback_domain作为测试环境域名
+        testDomain = `https://${ttLoginCallbackDomain}`
+        // 生产环境域名是测试环境域名去掉test
+        prodDomain = testDomain.replace('test', '')
+      } else {
+        // 如果没有配置tt_login_callback_domain，使用默认规则
+        testDomain = `https://noveltest${brandCode}.funshion.tv`
+        prodDomain = `https://novel${brandCode}.funshion.tv`
+      }
+
+      // 生成分支名（使用映射后的host）
+      const releaseBranch = `release_${hostForBranch}_${brandCode}`
+      const masterBranch = `master_${hostForBranch}_${brandCode}`
+
+      if (index > 0) content += '<br>'
+      
+      content += `<strong>${index + 1}. ${novel.label}</strong><br>
+<strong>//正式环境</strong><br>
+域名：${prodDomain}<br>
+目录：${scriptBase}<br>
+代码：git@code.funshion.com:somalia/funnovel.git<br>
+分支：${releaseBranch}<br><br>
+<strong>//测试环境</strong><br>
+域名：${testDomain}<br>
+目录：${scriptBase}<br>
+代码：git@code.funshion.com:somalia/funnovel.git<br>
+分支：${masterBranch}<br><br>`
+    })
+
+    content += '如有疑问，随时沟通，谢谢！'
+    return content
   }
 }
 
@@ -269,6 +440,19 @@ const generateEmailTemplate = () => {
   const templateType = props.template || 'domain'
   const template = emailTemplates[templateType]
   return template ? template() : emailTemplates.domain()
+}
+
+// 更新邮件内容（当小说选择改变时）
+const updateEmailContent = () => {
+  if (props.template === 'publish') {
+    emailForm.content = generateEmailTemplate()
+    // 如果编辑器存在，更新编辑器内容
+    nextTick(() => {
+      if (editorRef.value && !isHtmlMode.value) {
+        editorRef.value.innerHTML = emailForm.content
+      }
+    })
+  }
 }
 
 // 富文本编辑器相关方法
@@ -315,6 +499,11 @@ const setEditorContent = (html) => {
 
 // 初始化编辑器
 onMounted(async () => {
+  // 如果是发布配置模板，先加载小说数据
+  if (props.template === 'publish') {
+    await fetchNovelOptions()
+  }
+  
   await nextTick()
   if (editorRef.value) {
     // 设置初始内容

@@ -92,38 +92,18 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { House, Plus, VideoPlay, VideoCamera } from '@element-plus/icons-vue'
 import { useWebsite } from '@/composables/useWebsite'
+import { usePlatformInfo } from '@/composables/useConfig'
 import WebsiteCard from '@/components/business/WebsiteCard.vue'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 import Header from '@/components/common/Header.vue'
 
 const router = useRouter()
 const { websites, loading, fetchWebsites } = useWebsite()
+const { getH5Platforms } = usePlatformInfo()
 const error = ref('')
 
-// 平台相关
-const platforms = [
-  {
-    value: 'ksh5',
-    label: '快手H5',
-    description: '快手平台H5应用',
-    icon: 'VideoPlay',
-    iconClass: 'ks-icon'
-  },
-  {
-    value: 'tth5',
-    label: '抖音H5',
-    description: '抖音平台H5应用',
-    icon: 'VideoCamera',
-    iconClass: 'dy-icon'
-  },
-  {
-    value: 'h5',
-    label: '通用H5',
-    description: '通用H5应用',
-    icon: 'VideoPlay',
-    iconClass: 'h5-icon'
-  }
-]
+// 平台相关 - 使用 composable 提供的数据
+const platforms = getH5Platforms()
 
 const selectedPlatforms = ref([])
 

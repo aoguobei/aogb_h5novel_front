@@ -130,6 +130,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { Plus, View, Delete } from '@element-plus/icons-vue'
 import { websiteApi } from '@/api/website'
+import { useConfig } from '@/composables/useConfig'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue'
 
 const props = defineProps({
@@ -154,6 +155,7 @@ const props = defineProps({
 const emit = defineEmits(['refresh'])
 
 const router = useRouter()
+const { getHostDisplayName } = useConfig()
 const error = ref('')
 const deleteDialogVisible = ref(false)
 const clientToDelete = ref(null)
@@ -176,18 +178,6 @@ const clients = computed(() => {
       return dateB - dateA
     })
 })
-
-// 获取主机类型显示名称
-const getHostDisplayName = (host) => {
-  const hostMap = {
-    'h5': 'H5',
-    'tth5': '抖音H5',
-    'ksh5': '快手H5',
-    'tt': '抖音小程序',
-    'ks': '快手小程序'
-  }
-  return hostMap[host] || host
-}
 
 const getAppName = (client) => {
   if (client.base_configs?.length > 0) {

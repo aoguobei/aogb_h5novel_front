@@ -224,7 +224,7 @@
                 <el-icon class="step-icon"><Connection /></el-icon>
               </div>
               <div class="step-title">拉分支</div>
-              <p>找开发拉取相应的代码分支</p>
+              <p>代码库新建代码分支</p>
             </div>
 
             <div
@@ -238,6 +238,19 @@
               </div>
               <div class="step-title">发邮件</div>
               <p>发送发布配置邮件通知</p>
+            </div>
+
+            <div
+              class="step-item"
+              :class="{ 'active': selectedStep === 'nginx' }"
+              @click="selectStep('nginx')"
+            >
+              <div class="step-number">3</div>
+              <div class="step-icon-wrapper">
+                <el-icon class="step-icon"><Setting /></el-icon>
+              </div>
+              <div class="step-title">nginx配置</div>
+              <p>172.17.5.92本地测试机nginx配置</p>
             </div>
           </div>
 
@@ -265,6 +278,36 @@
                 :template="'publish'"
                 @email-sent="handlePublishEmailSent"
               />
+            </div>
+          </div>
+
+          <!-- nginx配置说明 -->
+          <div v-if="selectedStep === 'nginx'" class="content-section">
+            <div class="notes-container">
+              <div class="horizontal alignCenter notes-header">
+                <el-icon class="notes-icon"><Setting /></el-icon>
+                <div>
+                  <h3>nginx配置说明</h3>
+                  <p>172.17.5.92内网服务器配置nginx</p>
+                </div>
+              </div>
+              <div class="step-notes">
+                <div class="note-item">
+                  <strong>测试机信息：</strong>
+                  <ul>
+                    <li>IP地址：172.17.5.92</li>
+                    <li>用途：本地测试环境</li>
+                    <li>服务：nginx配置</li>
+                  </ul>
+                </div>
+                <div class="note-item">
+                  <strong>配置说明：</strong>
+                  <ul>
+                    <li>更改DNS配置</li>
+                    <li>配置nginx反向代理</li>
+                  </ul>
+                </div>
+              </div>
             </div>
           </div>
 
