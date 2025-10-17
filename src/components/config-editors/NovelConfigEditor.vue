@@ -20,11 +20,6 @@
           placeholder="例如：sslocal://miniapp?ticket=v1_3532788994"
           clearable
         >
-          <template #append>
-            <el-button @click="generateTTUrl" :loading="isGeneratingUrl">
-              生成URL
-            </el-button>
-          </template>
         </el-input>
         <span class="form-tip">抖音小程序跳转首页的URL</span>
       </el-form-item>
@@ -108,46 +103,6 @@ watch(() => props.config, (newConfig) => {
     }
   }
 }, { immediate: true, deep: true })
-
-// 生成TT跳转首页URL
-const generateTTUrl = async () => {
-  isGeneratingUrl.value = true
-
-  try {
-    // 构建请求参数
-    const requestParam = {
-      business: 'tt_miniapp_funnovel', // 示例business，实际应动态获取
-      path: 'pages/homePage/homePage',
-      query: JSON.stringify({})
-    }
-
-    // 设置请求头
-    const header = {
-      'Content-Type': 'application/x-www-form-urlencoded',
-    }
-
-    // 发送POST请求
-    const response = await fetch('https://paps.funshion.com/v1/applet/createschema', {
-      method: 'POST',
-      headers: header,
-      body: new URLSearchParams(requestParam)
-    })
-
-    const result = await response.json()
-
-    if (result.data && result.data.schema) {
-      form.value.tt_jump_home_url = result.data.schema
-      ElMessage.success('抖音跳转首页URL生成成功！')
-    } else {
-      ElMessage.error('生成URL失败：' + (result.message || '未知错误'))
-    }
-  } catch (error) {
-    console.error('生成URL失败:', error)
-    ElMessage.error('生成URL失败：网络错误')
-  } finally {
-    isGeneratingUrl.value = false
-  }
-}
 
 // 方法
 const handleSave = async () => {

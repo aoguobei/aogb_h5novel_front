@@ -1,9 +1,9 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
+import { config } from '@/config/env'
 
 const request = axios.create({
-  // baseURL: 'http://172.17.3.118:8080/api',
-  baseURL: '/api',
+  baseURL: config.API_BASE_URL,
   timeout: 10000
 })
 

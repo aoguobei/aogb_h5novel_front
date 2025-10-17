@@ -1,13 +1,17 @@
 <template>
   <div class="step-content">
     <div class="step-header">
-      <div class="step-title">第一步：选择品牌和端类型</div>
-      <p class="step-description">请选择要创建网站的品牌和对应的端类型</p>
+      <div class="step-title">第一步：选择brand和platform</div>
+      <p class="step-description">请选择要创建网站的brand和对应的platform</p>
     </div>
 
     <el-form :model="basicInfo" label-width="120px">
-      <el-form-item label="品牌" required>
-        <el-select v-model="basicInfo.brandId" placeholder="选择品牌" @change="onBrandChange">
+      <el-form-item label="brand" required>
+        <el-select
+          v-model="basicInfo.brandId"
+          placeholder="选择brand"
+          @change="onBrandChange"
+        >
           <el-option
             v-for="brand in brands"
             :key="brand.id"
@@ -15,50 +19,53 @@
             :value="brand.id"
           />
         </el-select>
-        <el-button type="primary" @click="showCreateBrandDialog = true" style="margin-left: 10px;">
-          新建品牌
+        <el-button
+          type="primary"
+          @click="showCreateBrandDialog = true"
+          style="margin-left: 10px;"
+        >
+          新建brand
         </el-button>
       </el-form-item>
-      <el-form-item label="端类型" required>
+
+      <el-form-item label="platform" required>
         <el-select
           v-model="basicInfo.host"
-          placeholder="选择端类型"
+          placeholder="选择platform"
           :disabled="!basicInfo.brandId"
         >
           <el-option
             v-for="host in availableHosts"
             :key="host.value"
-            :label="host.label"
+            :label="host.disabled ? `${host.label} (已存在)` : host.label"
             :value="host.value"
+            :disabled="host.disabled"
           />
         </el-select>
-        <div v-if="!basicInfo.brandId" class="form-tip">
-          请先选择品牌
-        </div>
-        <div v-else-if="availableHosts.length === 0" class="form-tip form-tip-warning">
-          该品牌的所有端类型都已创建完成
+        <div v-if="availableHosts.every(host => host.disabled)" class="form-tip form-tip-warning">
+          该brand的所有platform都已创建完成
         </div>
         <div v-else-if="!isCurrentHostAvailable" class="form-tip form-tip-error">
-          当前选择的端类型已存在，请重新选择
-        </div>
-      </el-form-item>
-
-      <el-form-item label="业务类型" required>
-        <el-radio-group v-model="basicInfo.businessType" :disabled="!basicInfo.brandId">
-          <el-radio value="novel">小说</el-radio>
-          <el-radio value="video" disabled>影视</el-radio>
-          <el-radio value="tool" disabled>其它</el-radio>
-        </el-radio-group>
-        <div v-if="!basicInfo.brandId" class="form-tip">
-          请先选择品牌
+          当前选择的platform已存在，请重新选择
         </div>
       </el-form-item>
     </el-form>
 
-    <!-- 创建品牌对话框 -->
-    <el-dialog v-model="showCreateBrandDialog" title="创建新品牌" width="400px" class="brand-dialog">
-      <el-form :model="newBrand">
-        <el-form-item label="品牌代码" required>
+    <!-- 创建brand对话框 -->
+    <el-dialog v-model="showCreateBrandDialog" title="创建新brand" width="500px" class="brand-dialog">
+      <el-form :model="newBrand" label-width="100px">
+        <el-form-item label="业务类型" required>
+          <el-select v-model="newBrand.type_id" placeholder="选择业务类型">
+            <el-option
+              v-for="type in types"
+              :key="type.id"
+              :label="type.name"
+              :value="type.id"
+              :disabled="type.code !== 'novel'"
+            />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="brand" required>
           <el-input v-model="newBrand.code" placeholder="输入brand" />
         </el-form-item>
       </el-form>
@@ -73,9 +80,10 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { brandApi } from '@/api/brand'
+import { useType } from '@/composables/useType'
 
 const props = defineProps({
   basicInfo: {
@@ -98,29 +106,51 @@ const props = defineProps({
 
 const emit = defineEmits(['update:basicInfo', 'brandChange', 'brandCreated'])
 
+// 使用类型相关的composable
+const { types, fetchTypes } = useType()
+
 const showCreateBrandDialog = ref(false)
-const newBrand = ref({ code: '' })
+const newBrand = ref({
+  code: '',
+  type_id: null
+})
 
 const onBrandChange = () => {
   emit('brandChange')
 }
 
 const createBrand = async () => {
+  if (!newBrand.value.type_id) {
+    ElMessage.error('请选择业务类型')
+    return
+  }
+
+  if (!newBrand.value.code.trim()) {
+    ElMessage.error('请输入brand')
+    return
+  }
+
   try {
-    const response = await brandApi.createBrand({ code: newBrand.value.code })
+    const response = await brandApi.createBrand({
+      code: newBrand.value.code,
+      type_id: newBrand.value.type_id
+    })
     if (response && response.success) {
-      ElMessage.success('品牌创建成功')
+      ElMessage.success('brand创建成功')
       showCreateBrandDialog.value = false
-      newBrand.value.code = ''
+      newBrand.value = { code: '', type_id: null }
       emit('brandCreated')
     } else {
-      ElMessage.error('品牌创建失败')
+      ElMessage.error('brand创建失败')
     }
   } catch (error) {
-    ElMessage.error('品牌创建失败')
+    ElMessage.error('brand创建失败')
     console.error(error)
   }
 }
+
+// 组件挂载时获取类型列表
+fetchTypes()
 </script>
 
 <style scoped>

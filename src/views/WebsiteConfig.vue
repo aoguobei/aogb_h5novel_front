@@ -3,8 +3,8 @@
     <div class="header">
       <el-button @click="$router.go(-1)" icon="ArrowLeft" class="back-btn">返回</el-button>
       <div class="header-content">
-        <div class="header-title">网站配置详情</div>
-        <div class="header-subtitle">查看和管理网站的所有配置信息</div>
+        <div class="header-title">配置详情</div>
+        <div class="header-subtitle">查看和管理网站/小程序的所有配置信息</div>
       </div>
     </div>
 
@@ -27,7 +27,7 @@
           <span>基本信息</span>
         </div>
         <el-descriptions :column="2" border>
-          <el-descriptions-item label="品牌代码">{{ config.client.brand.code }}</el-descriptions-item>
+          <el-descriptions-item label="brand">{{ config.client.brand.code }}</el-descriptions-item>
           <el-descriptions-item label="端类型">{{ config.client.host }}</el-descriptions-item>
           <el-descriptions-item label="创建时间">{{ formatDate(config.client.created_at) }}</el-descriptions-item>
           <el-descriptions-item label="更新时间">{{ formatDate(config.client.updated_at) }}</el-descriptions-item>
@@ -525,7 +525,7 @@ const handleNovelConfigSave = async (data) => {
 
 // 跳转到网站配置列表
 const goToWebsiteConfigs = () => {
-  router.push('/website-configs')
+  router.push('/')
 }
 
 onMounted(() => {
@@ -639,6 +639,7 @@ onMounted(() => {
   mask-composite: exclude;
   opacity: 0;
   transition: opacity 0.3s ease;
+  pointer-events: none;
 }
 
 .config-card:hover {
@@ -865,6 +866,7 @@ onMounted(() => {
   height: 100%;
   background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
   border-radius: 0 2px 2px 0;
+  pointer-events: none;
 }
 
 .config-section:last-child {

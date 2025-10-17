@@ -1,19 +1,21 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import BrandList from '../views/BrandList.vue'
 import CreateWebsite from '../views/CreateWebsite.vue'
 import WebsiteConfig from '../views/WebsiteConfig.vue'
 import WebsiteConfigs from '../views/WebsiteConfigs.vue'
 import WebsiteGeneration from '../views/WebsiteGeneration.vue'
 import GitSync from '../views/GitSync.vue'
-import DeployManager from '../components/deploy/DeployManager.vue'
+import IntranetPublish from '../views/IntranetPublish.vue'
+import InternetPublish from '../views/InternetPublish.vue'
+import DatabaseExport from '../views/DatabaseExport.vue'
+// 保留组件导入，用于向后兼容
+import TestLinkManagement from '../views/TestLinkManagement.vue'
 
 const routes = [
   {
     path: '/',
-    name: 'BrandList',
-    component: BrandList
+    name: 'WebsiteConfigs',
+    component: WebsiteConfigs
   },
-
   {
     path: '/create-website',
     name: 'CreateWebsite',
@@ -26,12 +28,6 @@ const routes = [
     props: true
   },
   {
-    path: '/website-configs',
-    name: 'WebsiteConfigs',
-    component: WebsiteConfigs
-  },
-
-  {
     path: '/website-generation',
     name: 'WebsiteGeneration',
     component: WebsiteGeneration
@@ -42,10 +38,36 @@ const routes = [
     name: 'GitSync',
     component: GitSync
   },
+
+  // 内网发布页面
   {
-    path: '/deploy',
-    name: 'DeployManager',
-    component: DeployManager
+    path: '/intranet-publish',
+    name: 'IntranetPublish',
+    component: IntranetPublish
+  },
+
+  // 外网发布页面
+  {
+    path: '/internet-publish',
+    name: 'InternetPublish',
+    component: InternetPublish
+  },
+
+  // 数据库导出页面
+  {
+    path: '/database-export',
+    name: 'DatabaseExport',
+    component: DatabaseExport
+  },
+
+  {
+    path: '/test-links',
+    name: 'TestLinkManagement',
+    component:TestLinkManagement,
+    meta: {
+      title: '测试链接列表',
+      requiresAuth: true
+    }
   }
 ]
 
@@ -54,4 +76,4 @@ const router = createRouter({
   routes
 })
 
-export default router 
+export default router

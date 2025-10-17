@@ -61,20 +61,9 @@ export const generateTTUrl = async (extraBaseConfig, novelConfig, isGeneratingUr
   }
 }
 
-// 进度管理函数
-export const updateProgress = (progressState, percentage, status, text, detail = null) => {
-  progressState.percentage.value = percentage
-  progressState.status.value = status
-  progressState.text.value = text
-
-  if (detail) {
-    progressState.details.value.push(detail)
-  }
-}
-
 export const resetProgress = (progressState) => {
   progressState.percentage.value = 0
   progressState.status.value = ''
   progressState.text.value = '准备创建...'
   progressState.details.value = []
-} 
+}

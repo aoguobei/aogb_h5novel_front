@@ -17,4 +17,10 @@ app.use(pinia)
 app.use(router)
 app.use(ElementPlus)
 
+// 预加载 qrcode 库
+import('qrcode').then(module => {
+  window.QRCode = module.default
+  console.log('QRCode library loaded')
+})
+
 app.mount('#app') 

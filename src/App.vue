@@ -12,26 +12,38 @@
           class="sidebar-menu"
           router
         >
-          <el-menu-item index="/">
-            <el-icon><House /></el-icon>
-            <span>小说列表</span>
+          <template v-if="!onlyShowTest">
+            <el-menu-item index="/">
+              <el-icon><Setting /></el-icon>
+              <span>H5小说列表</span>
+            </el-menu-item>
+            <el-menu-item index="/website-generation">
+              <el-icon><Document /></el-icon>
+              <span>网站创建</span>
+            </el-menu-item>
+            <el-menu-item index="/git-sync">
+              <el-icon><Refresh /></el-icon>
+              <span>代码同步</span>
+            </el-menu-item>
+            <el-menu-item index="/intranet-publish">
+              <el-icon><Upload /></el-icon>
+              <span>内网发布</span>
+            </el-menu-item>
+            <el-menu-item index="/internet-publish">
+              <el-icon><UploadFilled /></el-icon>
+              <span>公网发布</span>
+            </el-menu-item>
+          </template>
+          <el-menu-item :index="testMenuIndex">
+            <el-icon><Link /></el-icon>
+            <span>网站预览</span>
           </el-menu-item>
-          <el-menu-item index="/website-configs">
-            <el-icon><Setting /></el-icon>
-            <span>小说配置</span>
-          </el-menu-item>
-          <el-menu-item index="/website-generation">
-            <el-icon><Document /></el-icon>
-            <span>网站生成</span>
-          </el-menu-item>
-          <el-menu-item index="/git-sync">
-            <el-icon><Refresh /></el-icon>
-            <span>代码同步</span>
-          </el-menu-item>
-          <el-menu-item index="/deploy">
-            <el-icon><Upload /></el-icon>
-            <span>部署管理</span>
-          </el-menu-item>
+          <template v-if="!onlyShowTest">
+            <el-menu-item index="/database-export">
+                <el-icon><Download /></el-icon>
+                <span>数据库导出</span>
+            </el-menu-item>
+          </template>
         </el-menu>
       </el-aside>
       <el-container>
@@ -44,7 +56,13 @@
 </template>
 
 <script setup>
-import { House, Setting, Document, Refresh, Upload } from '@element-plus/icons-vue'
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+import { Setting, Document, Link, Refresh, Upload, UploadFilled, Download } from '@element-plus/icons-vue'
+
+const route = useRoute()
+const onlyShowTest = computed(() => route.query.type === 'test')
+const testMenuIndex = computed(() => (onlyShowTest.value ? '/test-links?type=test' : '/test-links'))
 </script>
 
 <style lang="less">

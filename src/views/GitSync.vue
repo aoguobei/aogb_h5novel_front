@@ -28,6 +28,14 @@
                   <el-icon><Upload /></el-icon>
                   上传代码到远程
                 </div>
+                <div
+                  class="function-option"
+                  :class="{ selected: selectedFunction === 'log' }"
+                  @click="onFunctionChange('log')"
+                >
+                  <el-icon><Document /></el-icon>
+                  查看提交历史
+                </div>
               </div>
             </div>
           </div>
@@ -71,43 +79,40 @@
                       size="small"
                       @click="refreshGitStatus"
                       class="refresh-btn"
+                      :loading="refreshing"
                     >
-                      <el-icon><Refresh /></el-icon>
-                      刷新状态
+                      <el-icon v-if="!refreshing"><Refresh /></el-icon>
+                      {{ refreshing ? '刷新中...' : '刷新状态' }}
                     </el-button>
                   </div>
-                  <div class="project-details">
-                    <div class="info-item">
-                      <span class="info-label">项目名称：</span>
-                      <span class="info-value">funNovel</span>
+                  <div class="project-details" :class="{ 'refreshing': refreshing }">
+                    <ProjectInfo
+                      :project-name="'funNovel'"
+                      :git-status="gitStatus"
+                      @toggle-status-details="onStatusDetailsToggle"
+                    />
                     </div>
-                    <div class="info-item">
-                      <span class="info-label">当前分支：</span>
-                      <span class="info-value">{{ gitStatus?.branch || '获取中...' }}</span>
-                    </div>
-                    <div class="info-item">
-                      <span class="info-label">工作区状态：</span>
-                      <span class="info-value">{{ gitStatus?.status || '获取中...' }}</span>
-                    </div>
-                    <div class="info-item" v-if="gitStatus?.ahead > 0">
-                      <span class="info-label">分支状态：</span>
-                      <span class="info-value warning-text">领先远程 {{ gitStatus.ahead }} 个提交</span>
-                    </div>
-                    <div class="info-item" v-if="gitStatus?.behind > 0">
-                      <span class="info-label">分支状态：</span>
-                      <span class="info-value warning-text">落后远程 {{ gitStatus.behind }} 个提交</span>
-                    </div>
-                    <div class="info-item">
-                      <span class="info-label">远程仓库：</span>
-                      <span class="info-value">origin</span>
-                    </div>
-                  </div>
                 </div>
 
                 <!-- 拉取操作 -->
                 <div class="pull-section">
                   <h4>拉取操作</h4>
-                  <div class="pull-description">
+                  <!-- 状态提示 -->
+                  <div v-if="gitStatus?.status === 'dirty'" class="dirty-warning">
+                    <el-icon><Warning /></el-icon>
+                    <span>工作区有未提交的修改，请先提交或恢复修改后再拉取代码</span>
+                  </div>
+                  <!-- <div v-else-if="gitStatus?.ahead > 0" class="branch-status-tip">
+                    <el-icon><Warning /></el-icon>
+                    <span>本地有{{ gitStatus.ahead }}个未推送的提交，可能未合入或已abandon！ 重置后请同步数据库：</span>
+                    <div class="action-buttons">
+                      <el-button size="small" type="warning" @click="resetToRemote">
+                        <el-icon><RefreshLeft /></el-icon>
+                        重置到远程
+                      </el-button>
+                    </div>
+                  </div> -->
+                  <div v-else class="pull-description">
                     <p>
                       🔄 点击按钮从远程仓库拉取最新代码到本地
                     </p>
@@ -119,17 +124,12 @@
                       size="large"
                       @click="pullCode"
                       :loading="pullLoading"
+                      :disabled="gitStatus?.status === 'dirty' || gitStatus?.ahead > 0"
                       class="pull-btn"
                     >
                       <el-icon><Download /></el-icon>
-                      {{ gitStatus?.ahead > 0 ? '智能同步 (自动重置)' : '拉取最新代码' }}
+                      拉取最新代码
                     </el-button>
-                  </div>
-
-                  <!-- 简单提示 -->
-                  <div v-if="gitStatus?.ahead > 0" class="simple-tip">
-                    <el-icon><Connection /></el-icon>
-                    <span>检测到提交被abandon，将自动重置分支后拉取代码</span>
                   </div>
 
                   <!-- 拉取结果 -->
@@ -205,36 +205,18 @@
                       size="small"
                       @click="refreshGitStatus"
                       class="refresh-btn"
+                      :loading="refreshing"
                     >
-                      <el-icon><Refresh /></el-icon>
-                      刷新状态
+                      <el-icon v-if="!refreshing"><Refresh /></el-icon>
+                      {{ refreshing ? '刷新中...' : '刷新状态' }}
                     </el-button>
                   </div>
-                  <div class="project-details">
-                    <div class="info-item">
-                      <span class="info-label">项目名称：</span>
-                      <span class="info-value">funNovel</span>
-                    </div>
-                    <div class="info-item">
-                      <span class="info-label">当前分支：</span>
-                      <span class="info-value">{{ gitStatus?.branch || '获取中...' }}</span>
-                    </div>
-                    <div class="info-item">
-                      <span class="info-label">工作区状态：</span>
-                      <span class="info-value">{{ gitStatus?.status || '获取中...' }}</span>
-                    </div>
-                    <div class="info-item" v-if="gitStatus?.ahead > 0">
-                      <span class="info-label">分支状态：</span>
-                      <span class="info-value warning-text">领先远程 {{ gitStatus.ahead }} 个提交</span>
-                    </div>
-                    <div class="info-item" v-if="gitStatus?.behind > 0">
-                      <span class="info-label">分支状态：</span>
-                      <span class="info-value warning-text">落后远程 {{ gitStatus.behind }} 个提交</span>
-                    </div>
-                    <div class="info-item">
-                      <span class="info-label">远程仓库：</span>
-                      <span class="info-value">origin</span>
-                    </div>
+                  <div class="project-details" :class="{ 'refreshing': refreshing }">
+                    <ProjectInfo
+                      :project-name="'funNovel'"
+                      :git-status="gitStatus"
+                      @toggle-status-details="onStatusDetailsToggle"
+                    />
                   </div>
                 </div>
 
@@ -286,6 +268,9 @@
                         <div v-if="pushResult.message">
                           {{ pushResult.message }}
                         </div>
+                        <span v-if="pushResult.success" class="gerrit-tip" @click="openGerrit">
+                          您提交的代码有待审查，请登录Gerrit处理
+                        </span>
                       </div>
 
                       <div v-if="pushResult.details && pushResult.details.length > 0" class="operation-details">
@@ -309,6 +294,124 @@
               </div>
             </div>
           </div>
+
+          <!-- 查看提交历史模块 -->
+          <div v-if="selectedFunction === 'log'" class="function-panel log-panel">
+            <div class="panel-header">
+              <div class="header-content">
+                <el-icon class="panel-icon"><Document /></el-icon>
+                <div class="header-text">
+                  <div class="panel-title">查看提交历史</div>
+                  <p>查看项目的提交记录和变更历史</p>
+        </div>
+      </div>
+    </div>
+
+            <div class="panel-body">
+              <div class="log-content">
+                <div class="feature-highlights">
+                  <div class="feature-item">
+                    <div class="feature-icon">📋</div>
+                    <div class="feature-title">提交记录</div>
+                    <p>查看当前分支的提交历史和详细信息</p>
+                  </div>
+                  <div class="feature-item">
+                    <div class="feature-icon">📄</div>
+                    <div class="feature-title">查看更多</div>
+                    <p>支持加载更多提交记录，完整查看历史</p>
+                  </div>
+                </div>
+
+                <!-- 项目信息展示 -->
+                <div class="project-info-section">
+                  <div class="section-header">
+                    <h4>项目信息</h4>
+                    <el-button
+                      link
+                      size="small"
+                      @click="refreshGitStatus"
+                      class="refresh-btn"
+                      :loading="refreshing"
+                    >
+                      <el-icon v-if="!refreshing"><Refresh /></el-icon>
+                      {{ refreshing ? '刷新中...' : '刷新状态' }}
+                    </el-button>
+                  </div>
+                  <div class="project-details" :class="{ 'refreshing': refreshing }">
+                    <ProjectInfo
+                      :project-name="'funNovel'"
+                      :git-status="gitStatus"
+                      @toggle-status-details="onStatusDetailsToggle"
+                    />
+                  </div>
+                </div>
+
+                <!-- 提交历史功能 -->
+                <div class="log-section">
+                  <h4>提交历史</h4>
+
+                  <!-- 操作按钮 -->
+                  <div class="log-actions">
+                    <el-button type="primary" @click="loadCommits" :loading="gitLogLoading">
+                      刷新
+                    </el-button>
+                  </div>
+
+                  <!-- 表格滚动容器 -->
+                  <div class="table-scroll-wrapper">
+                    <el-table
+                      :data="displayedCommits"
+                      v-loading="gitLogLoading"
+                      size="default"
+                      :row-style="{ height: '60px' }"
+                      class="commit-table"
+                    >
+                      <el-table-column prop="commit_id" label="提交ID" width="350" align="center">
+                        <template #default="{ row }">
+                          <code class="commit-id">{{ row.commit_id}}</code>
+                        </template>
+                      </el-table-column>
+                      <el-table-column prop="author" label="作者" width="100" align="center">
+                        <template #default="{ row }">
+                          <span class="author-name">{{ row.author }}</span>
+                        </template>
+                      </el-table-column>
+                      <el-table-column prop="date" label="提交时间" width="160" align="center">
+                        <template #default="{ row }">
+                          <span class="commit-date">{{ formatDate(row.date) }}</span>
+                        </template>
+                      </el-table-column>
+                      <el-table-column prop="message" label="提交信息" min-width="200">
+                        <template #default="{ row }">
+                          <div class="commit-message">{{ row.message }}</div>
+                        </template>
+                      </el-table-column>
+                    </el-table>
+                  </div>
+
+
+                  <!-- 分页组件 -->
+                  <div class="log-pagination">
+                    <el-pagination
+                      v-model:current-page="currentPage"
+                      v-model:page-size="pageSize"
+                      :total="totalCommits"
+                      :page-sizes="[5, 10, 15]"
+                      layout="total, prev, pager, next, sizes"
+                      @current-change="handlePageChange"
+                      @size-change="handleSizeChange"
+                    />
+                  </div>
+
+                  <!-- 空状态 -->
+                  <div v-if="!gitLogLoading && displayedCommits.length === 0" class="empty-state">
+                    <el-icon><Document /></el-icon>
+                    <p>暂无提交记录</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -317,8 +420,10 @@
   <script setup>
   import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { Download, Upload, Refresh, Connection } from '@element-plus/icons-vue'
+import { Download, Upload, Refresh, Document, Warning, RefreshLeft } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
 import Header from '@/components/common/Header.vue'
+import ProjectInfo from '@/components/common/ProjectInfo.vue'
 import { useGit } from '@/composables/useGit'
 
 const router = useRouter()
@@ -342,17 +447,92 @@ const {
   pushLoading,
   pullResult,
   pushResult,
+  gitLog,
+  gitLogLoading,
   getGitStatus,
-  refreshGitStatus,
+  refreshGitStatus: originalRefreshGitStatus,
   pullCode: pullCodeFromComposable,
-  pushCode: pushCodeFromComposable
+  pushCode: pushCodeFromComposable,
+  resetToRemote: resetToRemoteFromComposable,
+  getGitLog,
 } = useGit()
 
 const commitMessage = ref('')
+const refreshing = ref(false) // 刷新状态
+const showStatusDetails = ref(false) // 是否显示详细状态
+
+// 这些计算属性现在在 ProjectInfo 组件中处理
+
+// 分页相关状态
+const currentPage = ref(1)
+const pageSize = ref(5) // 每页显示5条
+const totalCommits = ref(0)
+const allCommits = ref([]) // 存储所有15条记录
+const displayedCommits = ref([]) // 当前页显示的记录
+
+// 格式化日期
+const formatDate = (dateStr) => {
+  if (!dateStr) return ''
+  try {
+    const date = new Date(dateStr)
+    return date.toLocaleString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  } catch (error) {
+    return dateStr
+  }
+}
+
+// 处理项目信息组件的状态详情切换事件
+const onStatusDetailsToggle = (isExpanded) => {
+  showStatusDetails.value = isExpanded
+}
+
+
+// 加载提交记录
+const loadCommits = async () => {
+  const result = await getGitLog({
+    limit: 15 // 后端返回15条记录
+  })
+  if (result) {
+    allCommits.value = result.commits || []
+    totalCommits.value = allCommits.value.length
+    updateDisplayedCommits()
+  }
+}
+
+// 更新当前页显示的记录
+const updateDisplayedCommits = () => {
+  const start = (currentPage.value - 1) * pageSize.value
+  const end = start + pageSize.value
+  displayedCommits.value = allCommits.value.slice(start, end)
+}
+
+// 分页变化处理
+const handlePageChange = (page) => {
+  currentPage.value = page
+  updateDisplayedCommits() // 只更新显示，不重新请求数据
+}
+
+// 页面大小变化处理
+const handleSizeChange = (size) => {
+  pageSize.value = size
+  currentPage.value = 1
+  updateDisplayedCommits() // 只更新显示，不重新请求数据
+}
 
 // 功能选择切换
 const onFunctionChange = (value) => {
   selectedFunction.value = value
+
+  // 如果切换到日志功能，自动加载最近的提交
+  if (value === 'log') {
+    loadCommits()
+  }
 }
 
 // 拉取代码
@@ -366,6 +546,29 @@ const pushCode = async () => {
   if (result) {
     // 提交成功后清空提交信息
     commitMessage.value = ''
+  }
+}
+
+// 重置到远程分支
+const resetToRemote = async () => {
+  await resetToRemoteFromComposable(gitStatus.value?.branch || 'test')
+}
+
+// 打开Gerrit审查页面
+const openGerrit = () => {
+  location.href = 'http://172.17.12.189:8150/#/q/status:open'
+}
+
+// 自定义刷新Git状态方法
+const refreshGitStatus = async () => {
+  refreshing.value = true
+  try {
+    await originalRefreshGitStatus()
+  } finally {
+    // 延迟一点时间让用户看到刷新效果
+    setTimeout(() => {
+      refreshing.value = false
+    }, 500)
   }
 }
 
@@ -389,8 +592,9 @@ onMounted(async () => {
       min-height: calc(100vh - 40px);
 
       .left-panel {
-        width: 380px;
+        width: 250px;
         box-sizing: border-box;
+        flex-shrink: 0;
       }
 
       .right-panel {
@@ -399,6 +603,7 @@ onMounted(async () => {
         flex-direction: column;
         gap: 25px;
         height: fit-content;
+        overflow: hidden; // 防止内容溢出
       }
     }
 
@@ -514,6 +719,7 @@ onMounted(async () => {
         padding: 30px;
         background: rgba(255, 255, 255, 0.8);
         flex: 1;
+        min-width: 0; // 关键：允许面板主体缩小
         display: flex;
         flex-direction: column;
 
@@ -619,15 +825,22 @@ onMounted(async () => {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 
-            &:hover {
+            &:hover:not(:disabled) {
               transform: translateY(-3px);
               box-shadow: 0 12px 35px rgba(102, 126, 234, 0.5);
               background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
             }
 
-            &:active {
+            &:active:not(:disabled) {
               transform: translateY(-1px);
               box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            }
+
+            &:disabled {
+              background: #6c757d;
+              box-shadow: none;
+              cursor: not-allowed;
+              opacity: 0.6;
             }
 
             .el-icon {
@@ -698,22 +911,52 @@ onMounted(async () => {
           }
         }
 
-        // 简单提示样式
-        .simple-tip {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          background: #fff3cd;
-          border: 1px solid #ffc107;
-          border-radius: 8px;
-          padding: 12px 16px;
-          margin-top: 15px;
-          font-size: 14px;
-          color: #856404;
+        // 统一提示样式
+        .branch-status-tip,
+        .dirty-warning,
+        .pull-description {
+          margin: 15px 0;
+          font-size: 13px;
+          text-align: center;
 
           .el-icon {
-            color: #856404;
-            font-size: 16px;
+            font-size: 14px;
+          }
+        }
+
+        // 分支状态提示样式
+        .branch-status-tip {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          border-radius: 8px;
+          padding: 10px 16px;
+          background: #f8d7da;
+          border: 1px solid #dc3545;
+          color: #721c24;
+
+          .el-icon {
+            color: #dc3545;
+          }
+
+          .action-buttons {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+          }
+        }
+
+        // 工作区dirty警告样式
+        .dirty-warning {
+          background: #f8d7da;
+          border: 1px solid #dc3545;
+          color: #721c24;
+          padding: 6px 16px;
+          border-radius: 8px;
+
+          .el-icon {
+            color: #dc3545;
           }
         }
 
@@ -750,6 +993,12 @@ onMounted(async () => {
           }
 
           .project-details {
+            transition: opacity 0.3s ease;
+
+            &.refreshing {
+              opacity: 0.5;
+            }
+
             .info-item {
               display: flex;
               align-items: center;
@@ -774,6 +1023,16 @@ onMounted(async () => {
 
                 &.warning-text {
                   color: #e67e22;
+                  font-weight: 600;
+                }
+
+                &.status-clean {
+                  color: #28a745;
+                  font-weight: 600;
+                }
+
+                &.status-dirty {
+                  color: #dc3545;
                   font-weight: 600;
                 }
               }
@@ -821,6 +1080,21 @@ onMounted(async () => {
                 font-weight: 500;
                 font-size: 14px;
               }
+
+              .gerrit-tip {
+                color: #dc3545;
+                font-weight: 500;
+                font-size: 13px;
+                margin-left: 10px;
+                border-radius: 4px;
+                cursor: pointer;
+                transition: color 0.2s ease;
+
+                &:hover {
+                  color: #a71e2c;
+                }
+              }
+
 
               .result-message {
                 font-weight: 500;
@@ -910,6 +1184,155 @@ onMounted(async () => {
             }
           }
         }
+
+        // 状态详情样式
+        .status-details-btn {
+          margin-left: 8px;
+          color: #667eea;
+          font-size: 12px;
+          padding: 2px 6px;
+
+          &:hover {
+            color: #5a67d8;
+          }
+
+          .status-arrow {
+            transition: transform 0.3s ease;
+            margin-right: 4px;
+
+            &.arrow-down {
+              transform: rotate(0deg);
+            }
+
+            &.arrow-up {
+              transform: rotate(180deg);
+            }
+          }
+        }
+
+        // 状态详情样式现在在 ProjectInfo 组件中
+
+        // 日志相关样式
+        .log-section {
+          background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+          border-left: 4px solid #667eea;
+          border-radius: 16px;
+          padding: 25px;
+          margin-bottom: 25px;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+          border: 1px solid rgba(102, 126, 234, 0.1);
+
+          h4 {
+            font-size: 16px;
+            color: #2c3e50;
+            margin: 0 0 15px 0;
+            font-weight: 600;
+          }
+
+          .log-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 20px;
+          }
+
+          // 表格滚动包装器
+          .table-scroll-wrapper {
+            width: 100%;
+            overflow-x: scroll;
+            margin-bottom: 20px;
+          }
+
+          .log-pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+            padding: 15px 0;
+          }
+
+          // 提交历史表格样式优化
+          .commit-table {
+            font-size: 14px;
+
+            :deep(.el-table__header) {
+              th {
+                background: #f8f9fa;
+                color: #2c3e50;
+                font-weight: 600;
+                font-size: 14px;
+                height: 50px;
+              }
+            }
+
+            :deep(.el-table__body) {
+              tr {
+                height: 60px;
+
+                &:hover {
+                  background: #f8f9fa;
+                }
+              }
+
+              td {
+                padding: 12px 8px;
+                vertical-align: middle;
+              }
+            }
+
+            .commit-id {
+              background: #e3f2fd;
+              color: #1976d2;
+              padding: 4px 8px;
+              border-radius: 4px;
+              font-size: 13px;
+              font-weight: 500;
+              font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            }
+
+            .author-name {
+              font-size: 14px;
+              font-weight: 500;
+              color: #2c3e50;
+            }
+
+            .commit-date {
+              font-size: 13px;
+              color: #6c757d;
+              font-weight: 500;
+            }
+
+            .commit-message {
+              font-size: 14px;
+              color: #2c3e50;
+              line-height: 1.4;
+              word-break: break-word;
+              max-width: 100%;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              display: -webkit-box;
+              -webkit-line-clamp: 2;
+              line-clamp: 2;
+              -webkit-box-orient: vertical;
+            }
+          }
+
+          .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6c757d;
+
+            .el-icon {
+              font-size: 48px;
+              margin-bottom: 16px;
+              color: #dee2e6;
+            }
+
+            p {
+              margin: 0;
+              font-size: 14px;
+            }
+          }
+        }
       }
     }
   }
@@ -971,5 +1394,6 @@ onMounted(async () => {
       transform: translateY(0);
     }
   }
+
 
 </style>

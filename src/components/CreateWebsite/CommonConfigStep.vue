@@ -5,7 +5,7 @@
       <p class="step-description">配置网站的通用设置和协议信息</p>
     </div>
 
-    <el-form :model="commonConfig" label-width="150px">
+    <el-form :model="commonConfig">
       <div class="section-title">
         <div class="section-title-icon">
           <el-icon><Connection /></el-icon>

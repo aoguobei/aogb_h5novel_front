@@ -140,7 +140,7 @@ import ProgressStep from '@/components/CreateWebsite/ProgressStep.vue'
 import { useRouter, useRoute } from 'vue-router'
 import { brandApi } from '@/api/brand'
 import { websiteApi } from '@/api/website'
-import { validateColor, handleColorInput, generateTTUrl, updateProgress, resetProgress } from '@/composables/useCreateWebsite'
+import { validateColor, handleColorInput, generateTTUrl, resetProgress } from '@/composables/useCreateWebsite'
 import websocketManager from '@/utils/websocket'
 
 const router = useRouter()
@@ -266,17 +266,6 @@ const selectedBrand = computed(() => {
 
 // 获取可选的host选项
 const availableHosts = computed(() => {
-  if (!selectedBrand.value) {
-    return [
-      { label: 'H5', value: 'h5' },
-      { label: '抖音H5', value: 'tth5' },
-      { label: '快手H5', value: 'ksh5' }
-    ]
-  }
-
-  // 获取该品牌已有的host列表
-  const existingHosts = selectedBrand.value.clients?.map(client => client.host) || []
-
   // 所有可选的host
   const allHosts = [
     { label: 'H5', value: 'h5' },
@@ -284,14 +273,25 @@ const availableHosts = computed(() => {
     { label: '快手H5', value: 'ksh5' }
   ]
 
-  // 过滤掉已存在的host
-  return allHosts.filter(host => !existingHosts.includes(host.value))
+  if (!selectedBrand.value) {
+    return allHosts
+  }
+
+  // 获取该品牌已有的host列表
+  const existingHosts = selectedBrand.value.clients?.map(client => client.host) || []
+
+  // 返回所有host，但标记已存在的为禁用状态
+  return allHosts.map(host => ({
+    ...host,
+    disabled: existingHosts.includes(host.value)
+  }))
 })
 
 // 检查当前选择的host是否可用
 const isCurrentHostAvailable = computed(() => {
   if (!basicInfo.value.host) return true
-  return availableHosts.value.some(host => host.value === basicInfo.value.host)
+  const selectedHost = availableHosts.value.find(host => host.value === basicInfo.value.host)
+  return selectedHost && !selectedHost.disabled
 })
 
 const canProceed = computed(() => {
@@ -393,7 +393,7 @@ const fetchBrands = async () => {
       const brandExists = brands.value.some(brand => brand.id === brandId)
       if (brandExists) {
         basicInfo.value.brandId = brandId
-        basicInfo.value.brandCode = route.query.brandCode
+        onBrandChange()
       } else {
         console.warn('指定的品牌不存在:', brandId)
       }
@@ -405,8 +405,9 @@ const fetchBrands = async () => {
 
 const onBrandChange = () => {
   // 当品牌改变时，可以预填充一些配置
-const selectedBrand = brands.value.find(b => b.id === basicInfo.value.brandId)
-basicInfo.value.brandCode = selectedBrand.code
+  const selectedBrand = brands.value.find(b => b.id === basicInfo.value.brandId)
+  basicInfo.value.brandCode = selectedBrand.code
+  basicInfo.value.businessType = selectedBrand.type?.code
 }
 
 // 当host改变时，重置额外的baseConfig
@@ -436,10 +437,6 @@ const prevStep = () => {
   if (currentStep.value > 0) {
     currentStep.value--
   }
-}
-
-const updateProgressState = (percentage, status, text, detail = null) => {
-  updateProgress({ percentage: progressPercentage, status: progressStatus, text: progressText, details: progressDetails }, percentage, status, text, detail)
 }
 
 const resetProgressState = () => {
@@ -572,7 +569,7 @@ const createWebsite = async () => {
               if (taskData.client_id) {
                 router.push(`/website-config/${taskData.client_id}`)
               } else {
-                router.push('/website-configs')
+                router.push('/')
               }
             }, 3000)
           } else if (taskData.status === 'running') {
@@ -598,7 +595,7 @@ const createWebsite = async () => {
             if (data.data?.client_id) {
               router.push(`/website-config/${data.data.client_id}`)
             } else {
-              router.push('/website-configs')
+              router.push('/')
             }
           }, 3000)
         } else {

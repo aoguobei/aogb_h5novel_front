@@ -34,6 +34,7 @@
       <el-form-item label="收件人" prop="to">
         <el-select
           v-model="emailForm.to"
+          multiple
           filterable
           allow-create
           default-first-option
@@ -208,7 +209,7 @@ const availableNovels = computed(() => {
 const getHostLabel = (host) => {
   const hostMap = {
     'tth5': 'TT H5',
-    'ksh5': 'KS H5', 
+    'ksh5': 'KS H5',
     'h5': 'H5'
   }
   return hostMap[host] || host
@@ -226,24 +227,26 @@ const getHostType = (host) => {
 
 // 默认收件人选项
 const defaultToOptions = [
-  'aogb@fun.tv',
-  'chenwy@fun.tv'
+  'shenym@example.com',
+  'guojy@example.com'
 ]
 
 // 默认抄送人选项
 const defaultCcOptions = [
-  'chenwy@fun.tv',
-  'lijj@fun.tv',
-  'zhengcheng@fun.tv',
-  'aogb@fun.tv',
+  'lijj@example.com',
+  'aogb@example.com',
+  'yangyang@example.com',
+  'wangna@example.com',
+  'wangjr@example.com',
+  'langjc@example.com'
 ]
 
 // 邮件表单数据
 const emailForm = reactive({
   userEmail: '',
   userPassword: '',
-  to: props.defaultTo,
-  cc: [], // 抄送人，支持多个
+  to: props.defaultTo ? [props.defaultTo] : [...defaultToOptions], // 收件人，默认包含所有默认收件人
+  cc: [...defaultCcOptions], // 抄送人，默认包含所有默认抄送人
   subject: props.defaultSubject,
   content: '',
   selectedNovels: [] // 选择的小说列表
@@ -259,8 +262,25 @@ const emailRules = {
     { required: true, message: '请输入邮箱密码', trigger: 'blur' }
   ],
   to: [
-    { required: true, message: '请输入收件人邮箱', trigger: 'blur' },
-    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
+    { required: true, message: '请选择收件人邮箱', trigger: 'change' },
+    {
+      validator: (rule, value, callback) => {
+        if (!value || value.length === 0) {
+          callback(new Error('请选择至少一个收件人'))
+        } else {
+          // 验证每个邮箱格式
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+          for (let email of value) {
+            if (!emailRegex.test(email)) {
+              callback(new Error(`邮箱格式不正确: ${email}`))
+              return
+            }
+          }
+          callback()
+        }
+      },
+      trigger: 'change'
+    }
   ],
   subject: [
     { required: true, message: '请输入邮件主题', trigger: 'blur' }
@@ -269,9 +289,9 @@ const emailRules = {
     { required: true, message: '请输入邮件内容', trigger: 'blur' }
   ],
   selectedNovels: [
-    { 
+    {
       required: false, // 不再必需，可以默认选择第一个小说
-      message: '请选择至少一个小说', 
+      message: '请选择至少一个小说',
       trigger: 'change'
     }
   ]
@@ -282,7 +302,7 @@ const isFormValid = computed(() => {
   // 检查所有必填字段是否都有值
   const hasRequiredFields = emailForm.userEmail &&
                            emailForm.userPassword &&
-                           emailForm.to &&
+                           emailForm.to && emailForm.to.length > 0 &&
                            emailForm.subject &&
                            emailForm.content
 
@@ -292,7 +312,7 @@ const isFormValid = computed(() => {
   }
 
   const hasValidEmails = isValidEmailFormat(emailForm.userEmail) &&
-                        isValidEmailFormat(emailForm.to)
+                        emailForm.to.every(email => isValidEmailFormat(email))
 
   // 检查内容是否为空（去除HTML标签后）
   const hasValidContent = emailForm.content &&
@@ -305,58 +325,23 @@ const isFormValid = computed(() => {
 const emailTemplates = {
   // 域名申请模板
   domain: () => {
-    // 如果没有选择小说，默认使用第一个小说
-    let novelsToProcess = emailForm.selectedNovels
-    if (!novelsToProcess || novelsToProcess.length === 0) {
-      if (availableNovels.value.length > 0) {
-        novelsToProcess = [availableNovels.value[0].value]
-      } else {
-        return `你好，${emailForm.to ? emailForm.to.split('@')[0] : ''}老师：<br>
+    // 获取所有收件人的名称
+    const toNames = emailForm.to && emailForm.to.length > 0
+      ? emailForm.to.map(email => email.split('@')[0]).join('、')
+      : ''
+    return `你好，${toNames}老师：<br>
 小说业务需进行h5投放，需要申请域名使用，具体如下：<br><br>
-<strong>暂无可用的小说配置</strong><br><br>
+<strong>●示范一，武汉主体：</strong><br>
+趣读故事会（武汉主体）<br>
+novelqd.funshion.tv<br>
+noveltestqd.funshion.tv<br>
+解析到funshion.tv的服务器即可<br><br>
+<strong>●示范二，北京主体：</strong><br>
+云游看点（北京主体）<br>
+novelyy.fun.tv<br>
+noveltestyy.fun.tv<br>
+解析到fun.tv的服务器即可<br><br>
 如有疑问，随时沟通，谢谢！`
-      }
-    }
-
-    let content = `你好，${emailForm.to ? emailForm.to.split('@')[0] : ''}老师：<br>
-小说业务需进行h5投放，需要申请域名使用，具体如下：<br><br>`
-
-    // 为每个选择的小说生成域名申请信息
-    novelsToProcess.forEach((selectedValue, index) => {
-      const novel = availableNovels.value.find(n => n.value === selectedValue)
-      if (!novel) return
-
-      const novelData = novel.data
-      const brandCode = novelData.brandCode
-      const ttLoginCallbackDomain = novelData.tt_login_callback_domain
-
-      // 生成域名
-      let testDomain, prodDomain
-      if (ttLoginCallbackDomain) {
-        // 使用小说配置中的tt_login_callback_domain作为测试环境域名
-        testDomain = ttLoginCallbackDomain
-        // 生产环境域名是测试环境域名去掉test
-        prodDomain = testDomain.replace('test', '')
-      } else {
-        // 如果没有配置tt_login_callback_domain，使用默认规则
-        testDomain = `noveltest${brandCode}.funshion.tv`
-        prodDomain = `novel${brandCode}.funshion.tv`
-      }
-
-      if (index > 0) content += '<br>'
-
-      content += `<strong>${index + 1}. ${novel.label}</strong><br>
-● <strong>域名申请：</strong><br>
-${prodDomain}<br>
-${testDomain}<br>
-解析到 <strong>funshion.tv</strong> 的服务器即可<br><br>
-● <strong>访问域名根目录重定向到：</strong><br>
-<a href="https://${testDomain}">https://${testDomain}</a><br>
-<a href="https://${prodDomain}">https://${prodDomain}</a><br><br>`
-    })
-
-    content += `如有疑问，随时沟通，谢谢！`
-    return content
   },
 
   // 发布配置模板
@@ -367,14 +352,20 @@ ${testDomain}<br>
       if (availableNovels.value.length > 0) {
         novelsToProcess = [availableNovels.value[0].value]
       } else {
-        return `你好，${emailForm.to ? emailForm.to.split('@')[0] : ''}老师：<br>
+        const toNames = emailForm.to && emailForm.to.length > 0
+          ? emailForm.to.map(email => email.split('@')[0]).join('、')
+          : ''
+        return `你好，${toNames}老师：<br>
 因小说业务需要，辛苦帮忙创建发布配置，具体如下：<br><br>
 <strong>暂无可用的小说配置</strong><br><br>
 如有疑问，随时沟通，谢谢！`
       }
     }
 
-    let content = `你好，${emailForm.to ? emailForm.to.split('@')[0] : ''}老师：<br>
+    const toNames = emailForm.to && emailForm.to.length > 0
+      ? emailForm.to.map(email => email.split('@')[0]).join('、')
+      : ''
+    let content = `你好，${toNames}老师：<br>
 因小说业务需要，辛苦帮忙创建发布配置，具体如下：<br><br>`
 
     // 为每个选择的小说生成配置
@@ -416,7 +407,7 @@ ${testDomain}<br>
       const masterBranch = `master_${hostForBranch}_${brandCode}`
 
       if (index > 0) content += '<br>'
-      
+
       content += `<strong>${index + 1}. ${novel.label}</strong><br>
 <strong>//正式环境</strong><br>
 域名：${prodDomain}<br>
@@ -427,7 +418,10 @@ ${testDomain}<br>
 域名：${testDomain}<br>
 目录：${scriptBase}<br>
 代码：git@code.funshion.com:somalia/funnovel.git<br>
-分支：${masterBranch}<br><br>`
+分支：${masterBranch}<br><br>
+最后，辛苦把以上小程序， 加入批量发布配置<br>
+novel_all_pro H5小说马甲批量发布 生产环境<br>
+novel_all_alpha H5小说马甲批量发布 测试环境<br><br>`
     })
 
     content += '如有疑问，随时沟通，谢谢！'
@@ -503,7 +497,7 @@ onMounted(async () => {
   if (props.template === 'publish') {
     await fetchNovelOptions()
   }
-  
+
   await nextTick()
   if (editorRef.value) {
     // 设置初始内容
@@ -544,7 +538,7 @@ const sendEmail = async () => {
     const response = await emailAPI.sendEmailWithUserAuth({
       user_email: emailForm.userEmail,
       user_password: emailForm.userPassword,
-      to_email: emailForm.to,
+      to_emails: emailForm.to, // 收件人邮箱列表
       cc_emails: emailForm.cc, // 抄送人邮箱列表
       subject: emailForm.subject,
       content: emailForm.content

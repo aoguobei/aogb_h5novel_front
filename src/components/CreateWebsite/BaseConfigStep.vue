@@ -18,7 +18,7 @@
           <el-input v-model="baseConfig.app_name" placeholder="输入app_name" />
         </el-form-item>
         <el-form-item label="平台" required>
-          <el-input v-model="baseConfig.platform" placeholder="输入platform" />
+          <el-input v-model="baseConfig.platform" placeholder="输入kuaishou、douyin等" />
         </el-form-item>
       </div>
 
@@ -36,7 +36,7 @@
           <el-input v-model="baseConfig.customer" placeholder="输入customer" />
         </el-form-item>
         <el-form-item label="应用ID" required>
-          <el-input v-model="baseConfig.appid" placeholder="输入appid" />
+          <el-input data-e2e="website-appid" v-model="baseConfig.appid" placeholder="输入appid" />
         </el-form-item>
       </div>
 
@@ -45,7 +45,7 @@
           <el-input v-model="baseConfig.version" placeholder="输入version" />
         </el-form-item>
         <el-form-item label="cl" required>
-          <el-input v-model="baseConfig.cl" placeholder="输入cl" />
+          <el-input data-e2e="website-cl" v-model="baseConfig.cl" placeholder="输入cl" />
         </el-form-item>
       </div>
 
@@ -66,19 +66,19 @@
         <!-- 抖音端：只显示cl字段 -->
         <template v-if="props.basicInfo.host === 'tth5'">
           <el-form-item label="cl" required>
-            <el-input v-model="extraBaseConfig.cl" placeholder="输入cl" />
+            <el-input data-e2e="mini-cl" v-model="extraBaseConfig.cl" placeholder="输入cl" />
           </el-form-item>
         </template>
 
         <!-- 快手端：只显示appid字段 -->
         <template v-else-if="props.basicInfo.host === 'ksh5'">
           <el-form-item label="应用ID" required>
-            <el-input v-model="extraBaseConfig.appid" placeholder="输入appid" />
+            <el-input data-e2e="mini-appid" v-model="extraBaseConfig.appid" placeholder="输入appid" />
           </el-form-item>
         </template>
 
         <!-- 其他端：显示所有字段 -->
-        <template v-else>
+<!--        <template v-else>
           <div class="form-row">
             <el-form-item label="应用名称" required>
               <el-input v-model="extraBaseConfig.app_name" placeholder="输入app_name" />
@@ -118,7 +118,7 @@
           <el-form-item label="uc">
             <el-input v-model="extraBaseConfig.uc" placeholder="输入uc" />
           </el-form-item>
-        </template>
+        </template>-->
       </el-form>
     </div>
   </div>

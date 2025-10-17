@@ -30,6 +30,7 @@ src/js/system/build.js
 run
 serve
 yarn.lock
+.husky/
 
 
 # 单元测试

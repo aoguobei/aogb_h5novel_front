@@ -6,9 +6,14 @@
         <el-card class="deploy-card">
           <template #header>
             <div class="card-header">
-              <h2>🚀 Nginx配置部署</h2>
+              <h2>Nginx配置部署</h2>
             </div>
           </template>
+
+      <!-- 重要提示信息 -->
+      <div style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 6px; padding: 8px; margin: 0; text-align: center;">
+        <div style="color: #dc2626; font-size: 14px; font-weight: 600;">此环境配置流程仅针对新创建的网站。对于已上线运行的网站，无需也请勿重复配置</div>
+      </div>
 
       <!-- 统一的部署配置表单 -->
       <el-form
@@ -44,16 +49,16 @@
             </el-form-item>
           </el-col>
           <el-col :span="6">
-            <el-form-item label="用户名" prop="server.username">
+            <el-form-item label="SSH用户名" prop="server.username">
               <el-input
                 v-model="serverForm.username"
-                placeholder="如: root"
+                placeholder="fun"
                 clearable
               />
             </el-form-item>
           </el-col>
           <el-col :span="6">
-            <el-form-item label="密码" prop="server.password">
+            <el-form-item label="SSH密码" prop="server.password">
               <el-input
                 v-model="serverForm.password"
                 type="password"
@@ -207,38 +212,25 @@
         <el-divider content-position="left">
           <span class="divider-text">🎯 部署操作</span>
         </el-divider>
-        
+
         <el-row :gutter="20">
-          <el-col :span="8">
-            <el-button 
-              type="primary" 
-              @click="deployConfig" 
-              :loading="deploying" 
-              :disabled="!canRemoteDeploy"
+          <el-col :span="12">
+            <el-button
+              type="primary"
+              @click="deployConfig"
+              :loading="deploying"
+              :disabled="!canDeploy"
               size="large"
               class="deploy-btn primary-btn"
             >
               <el-icon><Upload /></el-icon>
-              {{ deploying ? '正在远程部署...' : '远程部署' }}
+              {{ deploying ? '正在配置...' : '开始配置' }}
             </el-button>
           </el-col>
-          <el-col :span="8">
-            <el-button 
-              type="success" 
-              @click="deployLocal" 
-              :loading="deployingLocal" 
-              :disabled="!canLocalDeploy"
-              size="large"
-              class="deploy-btn success-btn"
-            >
-              <el-icon><Cpu /></el-icon>
-              {{ deployingLocal ? '本地部署中...' : '本地部署' }}
-            </el-button>
-          </el-col>
-          <el-col :span="8">
-            <el-button 
-              @click="resetForm" 
-              :disabled="deploying || deployingLocal"
+          <el-col :span="12">
+            <el-button
+              @click="resetForm"
+              :disabled="deploying"
               size="large"
               class="deploy-btn reset-btn"
             >
@@ -277,66 +269,6 @@
 
         </el-card>
       </div>
-
-      <!-- 右侧：使用说明 -->
-      <div class="deploy-right">
-        <el-card class="usage-card">
-          <template #header>
-            <div class="card-header">
-              <h2>📖 使用说明</h2>
-            </div>
-          </template>
-          
-          <div class="usage-content">
-            <div class="usage-section">
-              <h3>🚀 部署方式</h3>
-              <div class="usage-item">
-                <h4>远程部署</h4>
-                <p>填写服务器连接信息 → 配置nginx参数 → 点击"远程部署"</p>
-              </div>
-              <div class="usage-item">
-                <h4>本地部署</h4>
-                <p>直接配置nginx参数 → 点击"本地部署"(无需服务器连接)</p>
-              </div>
-            </div>
-
-            <div class="usage-section">
-              <h3>📝 配置说明</h3>
-              <div class="usage-item">
-                <h4>小说选择</h4>
-                <p>选择品牌和应用类型，自动填充目录和路径</p>
-              </div>
-              <div class="usage-item">
-                <h4>端口说明</h4>
-                <p>80为HTTP，443/8443/9443为HTTPS，其他端口可配置SSL证书启用HTTPS</p>
-              </div>
-            </div>
-
-            <div class="usage-section">
-              <h3>🔧 操作流程</h3>
-              <ol class="usage-steps">
-                <li>选择部署方式（远程/本地）</li>
-                <li>填写服务器连接信息（仅远程部署）</li>
-                <li>选择小说应用（自动填充配置）</li>
-                <li>配置域名和端口</li>
-                <li>配置SSL证书（HTTPS需要）</li>
-                <li>点击部署按钮</li>
-                <li>查看执行日志</li>
-              </ol>
-            </div>
-
-            <div class="usage-section">
-              <h3>⚠️ 注意事项</h3>
-              <ul class="usage-tips">
-                <li>确保服务器SSH连接正常</li>
-                <li>检查文件目录权限</li>
-                <li>HTTPS需要有效的SSL证书</li>
-                <li>端口确保未被占用</li>
-              </ul>
-            </div>
-          </div>
-        </el-card>
-      </div>
     </div>
   </div>
 </template>
@@ -344,20 +276,22 @@
 <script setup>
 import { ref, reactive, computed, watch, nextTick, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Upload, Cpu, Refresh } from '@element-plus/icons-vue'
+import { Upload, Refresh } from '@element-plus/icons-vue'
 import { useNovelSelector } from '@/composables/useConfig'
+import websocketManager from '@/utils/websocket'
+import { deployApi } from '@/api/deploy'
 
 // 响应式数据
 const deploying = ref(false)
-const deployingLocal = ref(false)
 const deployResult = ref(null)
 const scriptOutput = ref([])
 const logContainer = ref()
+const currentTaskId = ref(null)
 
 const serverForm = reactive({
   host: '172.17.5.92',
   port: 22, // 默认SSH端口，与后端配置保持一致
-  username: '',
+  username: 'fun',
   password: ''
 })
 
@@ -384,13 +318,61 @@ const {
   selectedCascaderValue,
   cascaderOptions,
   fetchNovelOptions,
-  getPlatformLabel,
-  getPlatformTagType,
-  findNovelByValue,
-  selectNovel,
   clearSelection,
   onCascaderChange
 } = useNovelSelector()
+
+// WebSocket连接状态
+const wsConnected = ref(false)
+const wsConnecting = ref(false)
+const wsError = ref(null)
+
+// WebSocket消息处理器
+const handleDeployOutput = (outputData) => {
+  if (outputData.type === 'output') {
+    addLogOutput(outputData.message)
+  } else if (outputData.type === 'error') {
+    addLogOutput(`❌ 错误: ${outputData.message}`)
+  } else if (outputData.type === 'success') {
+    addLogOutput(`✅ ${outputData.message}`)
+    deployResult.value = {
+      success: true,
+      message: outputData.message
+    }
+    // 部署完成，停止loading状态
+    deploying.value = false
+    ElMessage.success(outputData.message)
+  } else if (outputData.type === 'failed') {
+    addLogOutput(`❌ ${outputData.message}`)
+    deployResult.value = {
+      success: false,
+      message: outputData.message
+    }
+    // 部署失败，停止loading状态
+    deploying.value = false
+    ElMessage.error(outputData.message)
+  }
+}
+
+const handleTaskStatus = (taskData) => {
+  console.log('📊 任务状态更新:', taskData)
+  if (taskData.status === 'completed') {
+    addLogOutput(`✅ 任务完成: ${taskData.message}`)
+    deploying.value = false
+    wsConnected.value = false
+  } else if (taskData.status === 'failed') {
+    addLogOutput(`❌ 任务失败: ${taskData.error || taskData.message}`)
+    deployResult.value = {
+      success: false,
+      message: taskData.error || taskData.message
+    }
+    deploying.value = false
+    wsConnected.value = false
+    ElMessage.error('部署任务失败')
+  } else if (taskData.status === 'running') {
+    addLogOutput(`🔄 任务进度: ${taskData.progress}% - ${taskData.message}`)
+  }
+}
 
 // 表单引用
 const configFormRef = ref()
@@ -510,17 +492,12 @@ const isConfigFormValid = computed(() => {
   return basicValid
 })
 
-// 远程部署按钮是否可用
-const canRemoteDeploy = computed(() => {
+// 部署按钮是否可用
+const canDeploy = computed(() => {
   return isServerFormValid.value && isConfigFormValid.value && !deploying.value
 })
 
-// 本地部署按钮是否可用
-const canLocalDeploy = computed(() => {
-  return isConfigFormValid.value && !deployingLocal.value
-})
-
-// 部署配置（远程部署）
+// 部署配置
 const deployConfig = async () => {
   try {
     // 验证表单
@@ -537,94 +514,79 @@ const deployConfig = async () => {
     }
 
     // 添加开始日志
-    addLogOutput(`🚀 开始远程部署: ${configForm.domain}:${configForm.port}${configForm.locationPath}`)
+    addLogOutput(`🚀 开始配置: ${configForm.domain}:${configForm.port}${configForm.locationPath}`)
     addLogOutput(`📝 服务器: ${serverForm.username}@${serverForm.host}:${serverForm.port}`)
     addLogOutput(`📝 参数: ${JSON.stringify(deployConfigData, null, 2)}`)
     addLogOutput('═'.repeat(80))
 
-    // 调用后端API
-    const response = await fetch('/api/deploy/nginx', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(deployConfigData)
-    })
+    // 调用后端API创建任务
+    const result = await deployApi.nginxDeploy(deployConfigData)
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
+    if (!result.success) {
+      throw new Error(result.error || '创建部署任务失败')
     }
 
-    // 处理流式响应
-    const reader = response.body.getReader()
-    const decoder = new TextDecoder()
+    currentTaskId.value = result.taskId
+    addLogOutput(`📋 部署任务已创建: ${result.taskId}`)
+    addLogOutput(`🔗 正在建立WebSocket连接...`)
 
-    while (true) {
-      const { done, value } = await reader.read()
-
-      if (done) break
-
-      const chunk = decoder.decode(value)
-      const lines = chunk.split('\n')
-
-      for (const line of lines) {
-        if (line.trim()) {
-          try {
-            const data = JSON.parse(line)
-            if (data.type === 'output') {
-              addLogOutput(data.message)
-            } else if (data.type === 'error') {
-              addLogOutput(`❌ 错误: ${data.message}`)
-            } else if (data.type === 'success') {
-              addLogOutput(`✅ ${data.message}`)
-              deployResult.value = {
-                success: true,
-                message: data.message
-              }
-            } else if (data.type === 'failed') {
-              addLogOutput(`❌ ${data.message}`)
-              deployResult.value = {
-                success: false,
-                message: data.message
-              }
-            }
-          } catch (e) {
-            // 如果不是JSON格式，直接当作普通输出
-            addLogOutput(line)
-          }
+    // 建立WebSocket连接
+    wsConnecting.value = true
+    try {
+      await websocketManager.connectForDeploy(result.taskId, {
+        onDeployOutput: handleDeployOutput,
+        onTaskStatus: handleTaskStatus,
+        onError: (error) => {
+          wsError.value = error
+          wsConnecting.value = false
+          addLogOutput(`❌ WebSocket连接错误: ${error.message}`)
+        },
+        onClose: () => {
+          wsConnected.value = false
+          wsConnecting.value = false
+          addLogOutput(`🔌 WebSocket连接已断开`)
         }
-      }
+      })
+      wsConnected.value = true
+      wsConnecting.value = false
+      addLogOutput(`✅ WebSocket连接已建立`)
+      ElMessage.success('部署任务已启动，正在通过WebSocket获取实时进度')
+    } catch (error) {
+      wsConnecting.value = false
+      throw error
     }
-
-    if (!deployResult.value) {
-      deployResult.value = {
-        success: true,
-        message: '远程部署完成'
-      }
-    }
-
-    ElMessage.success('远程部署完成')
 
   } catch (error) {
-    console.error('远程部署错误:', error)
+    console.error('部署错误:', error)
     addLogOutput(`❌ 部署失败: ${error.message}`)
     deployResult.value = {
       success: false,
-      message: error.message || '远程部署过程中发生错误'
+      message: error.message || '部署过程中发生错误'
     }
-    ElMessage.error('远程部署失败')
-  } finally {
+    ElMessage.error('部署失败')
     deploying.value = false
   }
 }
 
 // 重置表单
 const resetForm = () => {
+  // 断开WebSocket连接
+  if (currentTaskId.value) {
+    websocketManager.disconnectDeploy(currentTaskId.value)
+  }
+  currentTaskId.value = null
+
   configFormRef.value.resetFields()
   clearSelection(configForm)
   resetServerForm()
   deployResult.value = null
   scriptOutput.value = []
+
+  // 重置部署状态
+  deploying.value = false
+  wsConnected.value = false
+  wsConnecting.value = false
+  wsError.value = null
 }
 
 // 重置服务器连接表单
@@ -633,7 +595,7 @@ const resetServerForm = () => {
   Object.assign(serverForm, {
     host: '172.17.5.92',
     port: 22,
-    username: '',
+    username: 'fun',
     password: ''
   })
 }
@@ -650,8 +612,6 @@ const onDomainChange = () => {
 const handleCascaderChange = (value) => {
   onCascaderChange(value, configForm)
 }
-
-
 
 // 域名到SSL证书路径的映射
 const DOMAIN_SSL_MAPPING = {
@@ -696,107 +656,6 @@ const autoFillCertPaths = () => {
     // 清空证书路径
     configForm.sslCertPath = ''
     configForm.sslKeyPath = ''
-  }
-}
-
-// 本地部署（调用本地脚本）
-const deployLocal = async () => {
-  try {
-    // 验证配置表单
-    await configFormRef.value.validate()
-
-    deployingLocal.value = true
-    deployResult.value = null
-    scriptOutput.value = []
-
-    // 构建脚本参数
-    const scriptParams = {
-      domain: configForm.domain,
-      port: configForm.port,
-      rootPath: configForm.rootPath,
-      locationPath: configForm.locationPath,
-      sslCertPath: configForm.sslCertPath || '',
-      sslKeyPath: configForm.sslKeyPath || ''
-    }
-
-    // 添加开始日志
-    addLogOutput(`🚀 开始本地部署: ${configForm.domain}:${configForm.port}${configForm.locationPath}`)
-    addLogOutput(`📝 参数: ${JSON.stringify(scriptParams, null, 2)}`)
-    addLogOutput('═'.repeat(80))
-
-    // 调用后端API执行本地脚本
-    const response = await fetch('/api/deploy/local', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(scriptParams)
-    })
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-
-    // 处理流式响应
-    const reader = response.body.getReader()
-    const decoder = new TextDecoder()
-
-    while (true) {
-      const { done, value } = await reader.read()
-
-      if (done) break
-
-      const chunk = decoder.decode(value)
-      const lines = chunk.split('\n')
-
-      for (const line of lines) {
-        if (line.trim()) {
-          try {
-            const data = JSON.parse(line)
-            if (data.type === 'output') {
-              addLogOutput(data.message)
-            } else if (data.type === 'error') {
-              addLogOutput(`❌ 错误: ${data.message}`)
-            } else if (data.type === 'success') {
-              addLogOutput(`✅ ${data.message}`)
-              deployResult.value = {
-                success: true,
-                message: data.message
-              }
-            } else if (data.type === 'failed') {
-              addLogOutput(`❌ ${data.message}`)
-              deployResult.value = {
-                success: false,
-                message: data.message
-              }
-            }
-          } catch (e) {
-            // 如果不是JSON格式，直接当作普通输出
-            addLogOutput(line)
-          }
-        }
-      }
-    }
-
-    if (!deployResult.value) {
-      deployResult.value = {
-        success: true,
-        message: '本地部署完成'
-      }
-    }
-
-    ElMessage.success('本地部署完成')
-
-  } catch (error) {
-    console.error('本地部署错误:', error)
-    addLogOutput(`❌ 部署失败: ${error.message}`)
-    deployResult.value = {
-      success: false,
-      message: error.message || '本地部署过程中发生错误'
-    }
-    ElMessage.error('本地部署失败')
-  } finally {
-    deployingLocal.value = false
   }
 }
 
@@ -847,43 +706,34 @@ onMounted(() => {
 
 <style scoped>
 .deploy-manager {
-  background: linear-gradient(135deg, #f0f2ff 0%, #e6f0ff 100%);
-  min-height: 100vh;
+  /* 移除 min-height: 100vh */
 }
 
-/* 左右布局 */
+/* 单列布局 */
 .deploy-layout {
   display: flex;
-  gap: 24px;
+  justify-content: center;
   align-items: flex-start;
 }
 
 .deploy-left {
-  flex: 1;
-  min-width: 0; /* 防止flex子项溢出 */
+  width: 100%;
+  max-width: 1200px;
 }
 
-.deploy-right {
-  width: 400px;
-  flex-shrink: 0;
-}
-
-.deploy-card, .usage-card {
-  margin-bottom: 20px;
+.deploy-card {
   border: 1px solid #b4c6fc;
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
 }
 
-.deploy-card :deep(.el-card__header),
-.usage-card :deep(.el-card__header) {
+.deploy-card :deep(.el-card__header) {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
 }
 
 .card-header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  align-items: baseline;
 }
 
 .card-header h2 {
@@ -894,103 +744,10 @@ onMounted(() => {
 
 .unified-form {
   padding: 0 20px;
-  /* background: linear-gradient(145deg, #ffffff 0%, #f8faff 100%); */
-  /* border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.08); */
 }
 
 .deploy-result {
   margin-bottom: 20px;
-}
-
-/* 右侧使用说明样式 */
-.usage-content {
-  padding: 20px;
-  background: linear-gradient(145deg, #ffffff 0%, #f8faff 100%);
-  border-radius: 12px;
-  height: calc(100vh - 200px);
-  overflow-y: auto;
-  scroll-behavior: smooth;
-}
-
-.usage-section {
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.usage-section:last-child {
-  border-bottom: none;
-  margin-bottom: 0;
-}
-
-.usage-section h3 {
-  margin: 0 0 12px 0;
-  color: #667eea;
-  font-weight: 600;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.usage-item {
-  margin-bottom: 12px;
-  padding: 12px;
-  background: linear-gradient(145deg, #f8faff 0%, #f0f2ff 100%);
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-}
-
-.usage-item h4 {
-  margin: 0 0 6px 0;
-  color: #2d3748;
-  font-weight: 600;
-  font-size: 14px;
-}
-
-.usage-item p {
-  margin: 0;
-  color: #4a5568;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.usage-steps {
-  margin: 12px 0;
-  padding-left: 20px;
-  counter-reset: step-counter;
-}
-
-.usage-steps li {
-  margin: 8px 0;
-  color: #4a5568;
-  font-size: 13px;
-  line-height: 1.5;
-  position: relative;
-  counter-increment: step-counter;
-}
-
-.usage-steps li::marker {
-  color: #667eea;
-  font-weight: 600;
-}
-
-.usage-tips {
-  margin: 12px 0;
-  padding-left: 20px;
-}
-
-.usage-tips li {
-  margin: 8px 0;
-  color: #4a5568;
-  font-size: 13px;
-  line-height: 1.5;
-  position: relative;
-}
-
-.usage-tips li::marker {
-  color: #f56565;
 }
 
 .ssl-config {
@@ -998,7 +755,6 @@ onMounted(() => {
   border: 1px solid #c7d5fe;
   border-radius: 8px;
   padding: 0 20px;
-  /* margin: 15px 0; */
   box-shadow: 0 1px 4px rgba(102, 126, 234, 0.06);
 }
 
@@ -1031,18 +787,6 @@ onMounted(() => {
 .primary-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
-}
-
-.success-btn {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  border: none;
-  color: white;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-}
-
-.success-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
 }
 
 .reset-btn {
@@ -1163,30 +907,11 @@ onMounted(() => {
 }
 
 /* 响应式设计 */
-@media (max-width: 1200px) {
-  .deploy-layout {
-    flex-direction: column;
-  }
-  
-  .deploy-right {
-    width: 100%;
-  }
-  
-  .usage-content {
-    height: auto;
-    max-height: 400px;
-  }
-}
-
 @media (max-width: 768px) {
   .deploy-manager {
     padding: 12px;
   }
-  
-  .deploy-layout {
-    gap: 16px;
-  }
-  
+
   .unified-form {
     padding: 20px;
   }

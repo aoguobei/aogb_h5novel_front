@@ -185,7 +185,7 @@ export function useNovelSelector() {
   const allNovelData = ref([])
   const selectedNovel = ref(null)
   const selectedCascaderValue = ref(null)
-  
+
   // 使用平台信息 composable
   const { getPlatformLabel, getPlatformTagType } = usePlatformInfo()
 
@@ -198,15 +198,15 @@ export function useNovelSelector() {
 
       // 筛选host为tth5、ksh5、h5的客户端
       const filteredClients = allClients.filter(client =>
-        ['tth5', 'ksh5', 'h5'].includes(client.host)
+        ['tth5', 'ksh5', 'h5'].includes(client.host) && client.brand?.type?.code === 'novel'
       )
 
       // 转换为统一格式并保存完整数据
       allNovelData.value = filteredClients.map(client => {
         // 获取应用名称，优先使用base_config中的app_name
         const appName = client.base_configs?.[0]?.app_name ||
-                       client.brand?.code ||
-                       `${client.host}-${client.id}`
+          client.brand?.code ||
+          `${client.host}-${client.id}`
         const script_base = client.common_configs?.[0]?.script_base || ''
         const tt_login_callback_domain = client.novel_configs?.[0]?.tt_login_callback_domain || ''
 
@@ -234,7 +234,7 @@ export function useNovelSelector() {
   // 构建级联选择器选项
   const cascaderOptions = computed(() => {
     const groups = new Map()
-    
+
     // 按品牌分组
     allNovelData.value.forEach(novel => {
       if (!groups.has(novel.brandCode)) {
@@ -244,7 +244,7 @@ export function useNovelSelector() {
           children: []
         })
       }
-      
+
       const novelOption = {
         value: `${novel.clientId}-${novel.host}`,
         label: novel.appName,
@@ -252,19 +252,19 @@ export function useNovelSelector() {
         platformType: getPlatformTagType(novel.host),
         data: novel // 保存完整数据
       }
-      
+
       groups.get(novel.brandCode).children.push(novelOption)
     })
-    
+
     // 转换为数组并排序
     const result = Array.from(groups.values())
       .sort((a, b) => a.label.localeCompare(b.label))
-    
+
     // 对每个品牌下的小说也排序
     result.forEach(brand => {
       brand.children.sort((a, b) => a.label.localeCompare(b.label))
     })
-    
+
     return result
   })
 
@@ -283,13 +283,14 @@ export function useNovelSelector() {
   // 选择小说
   const selectNovel = (novel, configForm) => {
     selectedNovel.value = novel
-    
+
     // 自动填充路径配置
     if (configForm) {
       configForm.rootPath = `/opt/website/${novel.host}-${novel.brandCode}/dist`
       // 确保locationPath以/开头，优先使用script_base，如果为空则使用brandCode
       const pathBase = novel.script_base || novel.brandCode
-      configForm.locationPath = pathBase.startsWith('/') ? pathBase : `/${pathBase}`
+      const base = pathBase.startsWith('/') ? pathBase : `/${pathBase}`
+      configForm.locationPath = base.endsWith('/') ? base.slice(0,-1) : base
     }
   }
 
@@ -309,7 +310,7 @@ export function useNovelSelector() {
       clearSelection(configForm)
       return
     }
-    
+
     // 查找选中的小说数据
     const novel = findNovelByValue(value)
     if (novel) {
@@ -331,4 +332,4 @@ export function useNovelSelector() {
     clearSelection,
     onCascaderChange
   }
-} 
+}

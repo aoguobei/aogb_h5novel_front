@@ -3,6 +3,7 @@ import { websiteApi } from '@/api/website'
 import { ElMessage } from 'element-plus'
 
 export function useWebsite() {
+  const clientsData = ref([]) 
   const websites = ref([])
   const loading = ref(false)
   const currentWebsite = ref(null)
@@ -14,7 +15,8 @@ export function useWebsite() {
       // 直接获取所有客户端（包含完整配置）
       const clientsResponse = await websiteApi.getAllClients()
       const allClients = clientsResponse.data.data || clientsResponse.data || []
-      
+      clientsData.value =  allClients
+
       // 根据参数决定是否包含所有类型的客户端
       let clients
       if (includeAllHosts) {
@@ -24,7 +26,7 @@ export function useWebsite() {
         // 只包含h5、ksh5、tth5，过滤掉tt、ks
         clients = allClients.filter(client => ['h5', 'ksh5', 'tth5'].includes(client.host))
       }
-      
+
       // 直接使用clients接口返回的配置数据
       const websitesWithConfigs = clients.map(client => {
         // 适配数据结构，将配置数据转换为前端期望的格式
@@ -37,7 +39,7 @@ export function useWebsite() {
           novel_config: client.novel_configs?.[0] || null,
           expanded: false // 默认折叠
         }
-        
+
         // 如果是ksh5，查找对应的ks小程序配置
         if (client.host === 'ksh5') {
           const ksClient = allClients.find(c => c.brand_id === client.brand_id && c.host === 'ks')
@@ -52,7 +54,7 @@ export function useWebsite() {
             }
           }
         }
-        
+
         // 如果是tth5，查找对应的tt小程序配置
         if (client.host === 'tth5') {
           const ttClient = allClients.find(c => c.brand_id === client.brand_id && c.host === 'tt')
@@ -67,18 +69,19 @@ export function useWebsite() {
             }
           }
         }
-        
+
         return websiteData
       })
-      
+
+
       // 按app_name排序
       websitesWithConfigs.sort((a, b) => {
         const appNameA = a.base_config?.app_name || ''
         const appNameB = b.base_config?.app_name || ''
         return appNameA.localeCompare(appNameB, 'zh-CN')
       })
-      
-      websites.value = websitesWithConfigs
+
+      websites.value = websitesWithConfigs.filter(website => website.client.brand?.type?.code === 'novel')
     } catch (error) {
       ElMessage.error('获取网站配置列表失败')
     } finally {
@@ -119,6 +122,7 @@ export function useWebsite() {
   }
 
   return {
+    clientsData,
     websites,
     loading,
     currentWebsite,
@@ -126,4 +130,4 @@ export function useWebsite() {
     createWebsite,
     getWebsiteConfig
   }
-} 
+}
